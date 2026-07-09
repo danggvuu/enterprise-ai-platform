@@ -1,0 +1,19 @@
+{
+  "Common": {
+    "login": "Login",
+    "logout": "Logout",
+    "settings": "Settings",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "Dashboard": {
+    "title": "Executive Dashboard",
+    "totalRequests": "Total Requests",
+    "activeUsers": "Active Users"
+  },
+  "Portal": {
+    "title": "Employee Portal",
+    "newChat": "New Chat",
+    "placeholder": "Ask anything..."
+  }
+}

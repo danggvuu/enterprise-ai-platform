@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------------------------
+// Identity & Access Management (IAM)
+// --------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  users       User[]
+  departments Department[]
+  apiKeys     ApiKey[]
+  policies    Policy[]
+  providers   ProviderConfig[]
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  users          User[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  passwordHash   String?
+  firstName      String?
+  lastName       String?
+  avatarUrl      String?
+  organizationId String?
+  departmentId   String?
+  role           Role         @default(EMPLOYEE)
+  isActive       Boolean      @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  department     Department?   @relation(fields: [departmentId], references: [id])
+  sessions       Session[]
+  conversations  Conversation[]
+  folders        Folder[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  organizationId String
+  isActive       Boolean      @default(true)
+  expiresAt      DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// --------------------------------------------------------
+// Employee Portal (Chat & Memory)
+// --------------------------------------------------------
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  title     String
+  userId    String
+  folderId  String?
+  isPinned  Boolean  @default(false)
+  isArchived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Settings
+  providerId     String?
+  modelId        String?
+  routingStrategy String?
+  systemPrompt   String?
+  temperature    Float?
+  maxTokens      Int?
+  topP           Float?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder    Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  sequenceNumber Int
+  createdAt      DateTime     @default(now())
+
+  // Execution Details (For assistant messages)
+  providerId         String?
+  modelId            String?
+  routingReason      String?
+  latencyMs          Int?
+  costUsd            Float?
+  promptTokens       Int?
+  completionTokens   Int?
+  totalTokens        Int?
+  isCacheHit         Boolean?
+  piiDetected        Boolean?
+  injectionDetected  Boolean?
+  circuitBreakerOpen Boolean?
+  retryCount         Int?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments    FileAsset[]
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+model FileAsset {
+  id          String   @id @default(cuid())
+  messageId   String?
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storageKey  String   @unique
+  storageType StorageType
+  createdAt   DateTime @default(now())
+
+  message     Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+}
+
+enum StorageType {
+  LOCAL
+  S3
+  MINIO
+  AZURE
+}
+
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  content     String
+  isGlobal    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --------------------------------------------------------
+// Admin Control Plane (Routing, Providers & Logs)
+// --------------------------------------------------------
+
+model ProviderConfig {
+  id             String       @id @default(cuid())
+  providerId     String       // e.g., 'openai', 'bedrock'
+  organizationId String
+  isEnabled      Boolean      @default(true)
+  priority       Int          @default(1)
+  weight         Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@unique([providerId, organizationId])
+}
+
+model Policy {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  priority       Int
+  conditionLogic Json         // Visual builder logic AST
+  actionLogic    Json         // Routing overrides
+  isEnabled      Boolean      @default(true)
+  isSimulation   Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model ProviderMetric {
+  id             String   @id @default(cuid())
+  providerId     String
+  timestamp      DateTime @default(now())
+  latencyMs      Int
+  isSuccess      Boolean
+  statusCode     Int?
+  tokensUsed     Int
+  costUsd        Float
+}
+
+model LogTrace {
+  id             String   @id @default(cuid())
+  traceId        String   @unique
+  organizationId String?
+  userId         String?
+  timestamp      DateTime @default(now())
+  
+  // Pipeline details
+  prompt         String
+  routingStrategy String?
+  providerId     String?
+  modelId        String?
+  
+  // Metrics
+  latencyMs      Int
+  costUsd        Float
+  tokens         Int
+  isCacheHit     Boolean
+  
+  // Security
+  piiDetected    Boolean
+  injectionDetected Boolean
+  
+  // Outcome
+  status         LogStatus
+  errorMessage   String?
+  responseText   String?
+}
+
+enum LogStatus {
+  SUCCESS
+  ERROR
+  BLOCKED
+}

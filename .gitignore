@@ -1,0 +1,55 @@
+# node
+node_modules
+
+# env
+.env
+.env.*
+
+!.env.example
+
+# next
+.next
+out
+
+# turbo
+.turbo
+
+# logs
+logs
+*.log
+
+# coverage
+coverage
+
+# prisma
+*.db
+
+# docker
+docker-data
+
+# uploads
+uploads
+
+# mac
+.DS_Store
+
+# vscode
+.vscode
+
+# idea
+.idea
+
+# cache
+.cache
+
+# dist
+dist
+
+# build
+build
+
+# ollama
+ollama
+
+# tmp
+tmp

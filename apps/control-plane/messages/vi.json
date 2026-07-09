@@ -1,0 +1,19 @@
+{
+  "Common": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "settings": "Cài đặt",
+    "save": "Lưu",
+    "cancel": "Hủy"
+  },
+  "Dashboard": {
+    "title": "Bảng điều khiển",
+    "totalRequests": "Tổng số yêu cầu",
+    "activeUsers": "Người dùng hoạt động"
+  },
+  "Portal": {
+    "title": "Cổng nhân viên",
+    "newChat": "Trò chuyện mới",
+    "placeholder": "Hỏi bất cứ điều gì..."
+  }
+}

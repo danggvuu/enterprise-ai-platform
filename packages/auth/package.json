@@ -1,0 +1,32 @@
+{
+  "name": "@enterprise/auth",
+  "version": "1.0.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && node --test dist/tests/**/*.spec.js"
+  },
+  "dependencies": {
+    "@enterprise/errors": "workspace:*",
+    "@enterprise/logger": "workspace:*",
+    "@ai-gateway/database": "workspace:*",
+    "fastify": "^5.10.0",
+    "fastify-plugin": "^4.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "argon2": "^0.40.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  },
+  "description": "",
+  "directories": {
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
