@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Database, AlertCircle, RefreshCw, Star, Info } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 export default function CachePage() {
+  const t = useTranslations('Admin');
   const { data: stats, isLoading, isError, refetch } = useQuery({
     queryKey: ['cacheStats'],
     queryFn: () => api.getCacheStats(),
@@ -33,8 +35,8 @@ export default function CachePage() {
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-zinc-100">Semantic Cache Dashboard</h1>
-          <p className="text-zinc-500 text-xs mt-1">Monitor Redis-backed semantic query performance and efficiency savings.</p>
+          <h1 className="text-2xl font-extrabold text-zinc-100">{t('cache')}</h1>
+          <p className="text-zinc-500 text-xs mt-1">{t('cacheDesc')}</p>
         </div>
         <button
           onClick={() => refetch()}

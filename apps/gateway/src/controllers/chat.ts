@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '@ai-gateway/database';
-import { ModelFactory, ChatRequest, DynamicRouter, RetryEngine, CircuitState } from '@enterprise/models';
+import { ModelFactory, ChatRequest, DynamicRouter, RetryEngine, CircuitState, decrypt } from '@enterprise/models';
+import { buildRegistryForOrg, globalHealthMonitor, globalCircuitBreakers } from '../services/registry';
 import { SafetyScanner } from '@enterprise/safety';
 import { SemanticCache } from '@enterprise/cache';
 import { CostTracker } from '@enterprise/finops';
@@ -96,8 +97,44 @@ export default async function chatRoutes(fastify: FastifyInstance) {
       throw err;
     }
 
-    const dynamicRouter = new DynamicRouter();
-    const strategy = (request.headers['x-routing-strategy'] as any) || currentGlobalStrategy || 'balanced';
+    const registry = await buildRegistryForOrg(orgId);
+    const dynamicRouter = new DynamicRouter(registry, globalHealthMonitor, globalCircuitBreakers);
+    const org = await prisma.organization.findUnique({ where: { id: orgId } });
+    let strategy = (request.headers['x-routing-strategy'] as any) || org?.routingStrategy || 'balanced';
+    
+    // Inject strong system prompt if missing to prevent Llama 3.2 hallucinations
+    if (!safeMessages.some(m => m.role === 'system')) {
+      safeMessages.unshift({
+        role: 'system',
+        content: 'You are a highly intelligent, professional Enterprise AI Assistant. You MUST ALWAYS respond in natural, fluent Vietnamese regardless of the language of the prompt unless explicitly asked to speak another language. Do not hallucinate facts. If you do not know something, say so.'
+      });
+    }
+    
+    // Evaluate Policies
+    const policies = await prisma.policy.findMany({ 
+      where: { organizationId: orgId, isEnabled: true },
+      orderBy: { priority: 'asc' } 
+    });
+
+    for (const policy of policies) {
+      const cond = policy.conditionLogic as any;
+      const act = policy.actionLogic as any;
+      let matched = false;
+      if (cond.field === 'Contains PII' && cond.value === 'true' && piiDetected) {
+        matched = true;
+      }
+      if (matched) {
+        if (act.actionField === 'Reject Request') {
+          throw new Error(`Blocked by policy: ${policy.name}`);
+        }
+        if (act.actionField === 'Force Provider Limit') {
+           strategy = 'cost-optimized'; // Enforce local model
+        }
+        if (act.actionField === 'Force Compliance Tag') {
+           safeMessages.unshift({ role: 'system', content: `[COMPLIANCE RULE ENFORCED]: ${act.actionValue}` });
+        }
+      }
+    }
     
     const adapterRequest = { ...payload, messages: safeMessages };
 
@@ -123,6 +160,24 @@ export default async function chatRoutes(fastify: FastifyInstance) {
             latencyMs: 5, costUsd: 0, tokens: 0, isCacheHit: true, piiDetected, injectionDetected, status: 'SUCCESS', responseText: responseContent
           }
         });
+        
+        if (conversationId) {
+          await prisma.message.create({
+            data: {
+              conversationId,
+              role: 'ASSISTANT',
+              content: responseContent,
+              sequenceNumber: payload.messages.length + 1,
+              providerId: 'cache',
+              modelId: payload.model,
+              latencyMs: 5,
+              costUsd: 0,
+              isCacheHit: true,
+              routingReason: strategy
+            }
+          });
+        }
+        
         publishSSE('request', successLog);
       });
 
@@ -152,7 +207,7 @@ export default async function chatRoutes(fastify: FastifyInstance) {
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 2000);
-          const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+          const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
           await fetch(`${ollamaUrl}/api/tags`, { signal: controller.signal });
           clearTimeout(timeout);
         } catch (err) {
@@ -164,10 +219,17 @@ export default async function chatRoutes(fastify: FastifyInstance) {
       }
 
       const retryEngine = new RetryEngine(1, 200); // 1 retry per provider since we failover
-      const adapter = ModelFactory.createAdapter(decision.providerId, {
-        apiKey: process.env.OPENAI_API_KEY, 
+      const isFallback = decision.providerId === 'ollama' || decision.providerId === 'openai';
+      const dbProvider = isFallback ? null : await prisma.providerConfig.findUnique({
+        where: { name_organizationId: { name: decision.providerId, organizationId: orgId } }
+      });
+      const decryptedKey = dbProvider?.encryptedApiKey ? decrypt(dbProvider.encryptedApiKey) : undefined;
+      const providerType = isFallback ? (decision.providerId === 'ollama' ? 'OLLAMA' : 'OPENAI') : (dbProvider?.providerType || 'OPENAI');
+
+      const adapter = ModelFactory.createAdapter(providerType, {
+        apiKey: decryptedKey || process.env.OPENAI_API_KEY, // Fallback to env for local dev if missing
         region: process.env.AWS_REGION || 'us-east-1',
-        baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+        baseUrl: dbProvider?.baseUrl || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
       });
       
       const startTime = Date.now();
@@ -241,6 +303,24 @@ export default async function chatRoutes(fastify: FastifyInstance) {
           latencyMs: latency, costUsd: cost, tokens, isCacheHit: false, piiDetected, injectionDetected, status: 'SUCCESS', responseText: responseContent
         }
       });
+      
+      if (conversationId) {
+        await prisma.message.create({
+          data: {
+            conversationId,
+            role: 'ASSISTANT',
+            content: responseContent,
+            sequenceNumber: payload.messages.length + 1,
+            providerId: finalDecision.providerId,
+            modelId: finalDecision.modelId,
+            latencyMs: latency,
+            costUsd: cost,
+            isCacheHit: false,
+            routingReason: strategy
+          }
+        });
+      }
+      
       publishSSE('request', successLog);
     });
 

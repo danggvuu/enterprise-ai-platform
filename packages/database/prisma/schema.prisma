@@ -19,11 +19,16 @@ model Organization {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
+  routingStrategy String @default("balanced")
+  defaultModel    String @default("llama3.2")
+
+
   users       User[]
   departments Department[]
   apiKeys     ApiKey[]
   policies    Policy[]
   providers   ProviderConfig[]
+  budget      Budget?
 }
 
 model Department {
@@ -203,19 +208,74 @@ model PromptTemplate {
 // Admin Control Plane (Routing, Providers & Logs)
 // --------------------------------------------------------
 
+enum ProviderType {
+  OPENAI
+  ANTHROPIC
+  OLLAMA
+  BEDROCK
+  CUSTOM
+  GOOGLE_GEMINI
+  AZURE_OPENAI
+  OPENROUTER
+  GROQ
+  TOGETHER
+  FIREWORKS
+  MISTRAL
+  DEEPSEEK
+  LM_STUDIO
+  VLLM
+  LOCAL_AI
+}
+
 model ProviderConfig {
   id             String       @id @default(cuid())
-  providerId     String       // e.g., 'openai', 'bedrock'
   organizationId String
+  name           String
+  providerType   ProviderType @default(CUSTOM)
+  baseUrl        String?
+  encryptedApiKey String?
+  
   isEnabled      Boolean      @default(true)
   priority       Int          @default(1)
   weight         Int          @default(1)
+  
+  healthStatus   String       @default("unknown")
+  lastSyncAt     DateTime?
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  models         AIModel[]
   
-  @@unique([providerId, organizationId])
+  @@unique([name, organizationId])
+}
+
+model AIModel {
+  id             String         @id @default(cuid())
+  providerId     String
+  modelId        String         // The actual string passed to the API e.g. gpt-4o
+  
+  displayName             String?
+  description             String?
+  supportsVision          Boolean @default(false)
+  supportsStreaming        Boolean @default(true)
+  supportsToolCalling     Boolean @default(false)
+  supportsEmbeddings      Boolean @default(false)
+  supportsJsonMode        Boolean @default(false)
+  supportsReasoning       Boolean @default(false)
+  isDeprecated            Boolean @default(false)
+  status                  String  @default("active")
+
+  contextWindow  Int            @default(8192)
+  promptCostPer1k Float         @default(0)
+  completionCostPer1k Float     @default(0)
+  
+  capabilities   Json?          // e.g. { "supportsStreaming": true, "supportsVision": true }
+  
+  provider       ProviderConfig @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  @@unique([providerId, modelId])
 }
 
 model Policy {
@@ -272,10 +332,38 @@ model LogTrace {
   status         LogStatus
   errorMessage   String?
   responseText   String?
+
+  @@index([organizationId, timestamp])
 }
 
 enum LogStatus {
   SUCCESS
   ERROR
   BLOCKED
+}
+
+model Budget {
+  id                   String       @id @default(cuid())
+  organizationId       String       @unique
+  monthlyLimitUsd      Float        @default(0)
+  alertThresholdPercent Int         @default(80)
+  currentSpendUsd      Float        @default(0)
+  resetDay             Int          @default(1)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?
+  userId         String?
+  action         String
+  resource       String
+  resourceId     String?
+  metadata       Json?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
 }

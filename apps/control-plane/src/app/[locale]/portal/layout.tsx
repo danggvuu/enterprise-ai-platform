@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MessageSquare, Plus, Folder, Star, Clock, User, LogOut, Code, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { MessageSquare, Plus, Folder, Star, Clock, User, LogOut, Code, ChevronLeft, ChevronRight, Settings, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const t = useTranslations('Portal');
+  const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
   const [workspace, setWorkspace] = useState('General');
   const [user, setUser] = useState<any>(null);
@@ -36,7 +39,20 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   };
 
   const handleNewChat = () => {
-    window.location.href = '/en/portal'; // Reloads cleanly for a new chat
+    window.location.href = `/${locale}/portal`; // Reloads cleanly for a new chat
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await api.deleteConversation(id);
+      setConversations(prev => prev.filter(c => c.id !== id));
+      if (window.location.search.includes(id)) {
+        window.location.href = `/${locale}/portal`;
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -75,19 +91,19 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             className="flex items-center justify-center gap-2 w-full p-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg text-sm transition-all duration-150 cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4 text-zinc-400" />
-            {!collapsed && <span>New Chat</span>}
+            {!collapsed && <span>{t('newChat')}</span>}
           </button>
 
           {/* Workspaces List */}
           <div className="flex flex-col gap-2">
-            {!collapsed && <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Workspace</span>}
+            {!collapsed && <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{t('workspace')}</span>}
             <select
               value={workspace}
               onChange={(e) => setWorkspace(e.target.value)}
               className={`w-full p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500 ${collapsed ? 'hidden' : ''}`}
             >
-              <option value="General">Personal Workspace</option>
-              {user?.organizationId && <option value="Org">Organization Wide</option>}
+              <option value="General">{t('personal')}</option>
+              {user?.organizationId && <option value="Org">{t('org')}</option>}
             </select>
           </div>
 
@@ -95,20 +111,30 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <div className="flex flex-col gap-2">
             {!collapsed && (
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                <Clock className="w-3 h-3 text-zinc-400" /> Recent Conversations
+                <Clock className="w-3 h-3 text-zinc-400" /> {t('recent')}
               </span>
             )}
             {conversations.length === 0 && !collapsed && (
-              <div className="text-xs text-zinc-600 p-2 italic">No recent chats</div>
+              <div className="text-xs text-zinc-600 p-2 italic">{t('noRecent')}</div>
             )}
             {conversations.map(item => (
               <div
                 key={item.id}
-                onClick={() => router.push(`/en/portal?c=${item.id}`)}
-                className="flex items-center gap-2 p-2 hover:bg-zinc-900/60 rounded-lg text-xs text-zinc-400 cursor-pointer truncate"
+                onClick={() => router.push(`/${locale}/portal?c=${item.id}`)}
+                className="group flex items-center justify-between p-2 hover:bg-zinc-900/60 rounded-lg text-xs text-zinc-400 cursor-pointer transition-colors"
               >
-                <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.title}</span>}
+                <div className="flex items-center gap-2 truncate">
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                  {!collapsed && <span className="truncate">{item.title}</span>}
+                </div>
+                {!collapsed && (
+                  <button 
+                    onClick={(e) => handleDelete(e, item.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-opacity shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -128,13 +154,24 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             )}
           </div>
           {!collapsed && (
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 p-2 mt-2 hover:bg-zinc-900 text-xs text-zinc-400 hover:text-zinc-200 rounded-lg cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span>Sign Out</span>
-            </button>
+            <div className="flex flex-col gap-1 mt-2">
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                <Link
+                  href={`/${locale}/admin/dashboard`}
+                  className="flex items-center gap-2 p-2 hover:bg-zinc-900 text-xs text-blue-400 hover:text-blue-300 rounded-lg cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 shrink-0" />
+                  <span>{t('adminDash')}</span>
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 p-2 hover:bg-zinc-900 text-xs text-zinc-400 hover:text-zinc-200 rounded-lg cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                <span>{t('signOut')}</span>
+              </button>
+            </div>
           )}
         </div>
       </aside>

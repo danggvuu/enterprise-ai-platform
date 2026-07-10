@@ -5,8 +5,8 @@ import { ProviderError } from '@enterprise/errors';
 export class OpenAIAdapter implements ModelAdapter {
   private client: OpenAI;
 
-  constructor(apiKey: string) {
-    this.client = new OpenAI({ apiKey });
+  constructor(apiKey: string, baseURL?: string) {
+    this.client = new OpenAI({ apiKey, baseURL });
   }
 
   async chat(request: ChatRequest): Promise<ChatResponse> {

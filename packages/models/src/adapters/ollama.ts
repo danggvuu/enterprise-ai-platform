@@ -4,7 +4,7 @@ import { ProviderError } from '@enterprise/errors';
 export class OllamaAdapter implements ModelAdapter {
   private baseUrl: string;
 
-  constructor(baseUrl: string = 'http://localhost:11434') {
+  constructor(baseUrl: string = 'http://127.0.0.1:11434') {
     this.baseUrl = baseUrl;
   }
 

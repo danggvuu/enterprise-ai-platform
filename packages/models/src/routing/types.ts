@@ -17,6 +17,7 @@ export interface ModelPricing {
 export interface ProviderMetadata {
   id: string;
   name: string;
+  type?: string;
   capabilities: ProviderCapabilities;
   pricing: Record<string, ModelPricing>; // map of modelId to pricing
   supportedModels: string[];

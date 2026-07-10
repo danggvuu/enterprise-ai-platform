@@ -1,18 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { ProviderInfo } from '@/lib/types';
-import { Shield, Sparkles, CheckCircle, XCircle, Database, AlertOctagon, HelpCircle, ArrowUpRight } from 'lucide-react';
+import { Shield, Sparkles, CheckCircle, XCircle, Database, AlertOctagon, HelpCircle, ArrowUpRight, Plus, Trash2 } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import ProviderForm from './ProviderForm';
 
 export default function ProvidersPage() {
+  const t = useTranslations('Admin');
   const [selectedProviderId, setSelectedProviderId] = useState<string>('openai');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const { data: providers, isLoading, refetch } = useQuery({
     queryKey: ['adminProviders'],
     queryFn: () => api.getProviders(),
+  });
+
+  const { data: hardware } = useQuery({
+    queryKey: ['adminHardware'],
+    queryFn: () => api.getHardwareInfo(),
   });
 
   const toggleMutation = useMutation({
@@ -26,6 +35,19 @@ export default function ProvidersPage() {
   const handleToggle = (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'active' ? 'disabled' : 'enabled';
     toggleMutation.mutate({ id, status: nextStatus });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteProvider(id),
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this provider?')) {
+      deleteMutation.mutate(id);
+    }
   };
 
   if (isLoading || !providers) {
@@ -76,10 +98,26 @@ export default function ProvidersPage() {
   return (
     <div className="space-y-8">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-zinc-100">Provider Management</h1>
-        <p className="text-zinc-500 text-xs mt-1">Configure weights, toggle endpoints, and inspect capabilities.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-extrabold text-zinc-100">{t('providers')}</h1>
+          <p className="text-zinc-500 text-xs mt-1">{t('providersDesc')}</p>
+        </div>
+        <button 
+          onClick={() => setShowAddForm(true)}
+          className="bg-white hover:bg-zinc-200 text-black px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Custom Provider
+        </button>
       </div>
+
+      {showAddForm && (
+        <ProviderForm 
+          onSuccess={() => { setShowAddForm(false); refetch(); }} 
+          onCancel={() => setShowAddForm(false)} 
+        />
+      )}
 
       {/* Grid of providers */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -131,7 +169,16 @@ export default function ProvidersPage() {
 
               {/* Action buttons */}
               <div className="mt-6 pt-4 border-t border-zinc-800/40 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 font-semibold uppercase">Priority Weight: {provider.priority}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(provider.id);
+                  }}
+                  className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-950/20 rounded-md transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -222,6 +269,26 @@ export default function ProvidersPage() {
                   <span>Vision Mode:</span>
                   <span className="text-zinc-500">Unsupported</span>
                 </div>
+                {selectedProviderId === 'ollama' && hardware?.ollama && (
+                  <>
+                    <div className="flex justify-between border-t border-zinc-800/60 pt-2 mt-2">
+                      <span>Gateway Mode:</span>
+                      <span className={hardware.ollama.status === 'Connected' ? 'text-emerald-400' : 'text-red-400'}>
+                        {hardware.ollama.status === 'Connected' ? 'Embedded / Detected' : 'External / Offline'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Ollama Version:</span>
+                      <span className="text-zinc-200">{hardware.ollama.version}</span>
+                    </div>
+                    {hardware.ollama.models?.map((m: any) => (
+                      <div key={m.name} className="flex justify-between text-[10px]">
+                        <span>Loaded {m.name}:</span>
+                        <span className="text-zinc-200">{m.sizeGb} GB | {m.parameterSize} | {m.quantization}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>

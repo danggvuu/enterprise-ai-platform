@@ -27,9 +27,9 @@ npx pnpm@9.1.0 run build || true
 
 # 3. Database configuration
 echo "[3/4] Configuring database..."
-if [ -f "docker-compose.yml" ]; then
+if [ -f "docker-compose.dev.yml" ]; then
     echo "Starting Docker containers (PostgreSQL, Redis)..."
-    docker-compose up -d postgres redis
+    docker-compose -f docker-compose.dev.yml up -d postgres redis
     sleep 5
 fi
 

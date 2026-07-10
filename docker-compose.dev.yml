@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Redis for Semantic Cache & Rate Limiting
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # PostgreSQL for Relational Data (Users, Tenants, Config)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: enterprise_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d enterprise_ai"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # The Enterprise AI Gateway API
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://admin:password@postgres:5432/enterprise_ai
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+
+  # Control Plane Dashboard
+  control-plane:
+    build:
+      context: .
+      dockerfile: apps/control-plane/Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - gateway
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+
+  # Ollama for Local Inference
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+  pg_data:
+  ollama_data:

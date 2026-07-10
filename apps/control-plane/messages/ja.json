@@ -9,11 +9,54 @@
   "Dashboard": {
     "title": "ダッシュボード",
     "totalRequests": "総リクエスト数",
-    "activeUsers": "アクティブユーザー数"
+    "activeUsers": "アクティブユーザー"
   },
   "Portal": {
     "title": "従業員ポータル",
     "newChat": "新しいチャット",
-    "placeholder": "何でも聞いてください..."
+    "placeholder": "何でも聞いてください...",
+    "workspace": "ワークスペース",
+    "personal": "個人",
+    "org": "組織全体",
+    "recent": "最近の会話",
+    "noRecent": "最近のチャットはありません",
+    "adminDash": "管理ダッシュボード",
+    "signOut": "サインアウト",
+    "emptyState": "こんにちは！エンタープライズAIアシスタントです。コードレビュー、ドキュメント要約、データ分析などをお手伝いします。",
+    "model": "モデル",
+    "strategy": "戦略"
+  },
+  "Settings": {
+    "title": "プラットフォーム設定",
+    "description": "グローバルな設定とデフォルトの動作を構成します。",
+    "appearance": "外観",
+    "darkMode": "ダークモード",
+    "lightMode": "ライトモード",
+    "systemDefault": "システムデフォルト",
+    "language": "多言語化 (i18n)",
+    "english": "英語",
+    "vietnamese": "ベトナム語",
+    "japanese": "日本語",
+    "aiProvider": "AIプロバイダーのデフォルト",
+    "defaultModel": "新しいチャットのデフォルトモデル",
+    "modelDesc": "ユーザーは従業員ポータル内でこの選択を上書きできます。",
+    "saveChanges": "変更を保存",
+    "saved": "設定が保存されました！"
+  },
+  "Sidebar": {
+    "dashboard": "ダッシュボード",
+    "users": "ユーザー",
+    "orgs": "組織",
+    "monitor": "ライブリクエスト",
+    "providers": "プロバイダー",
+    "routing": "ルーティングエンジン",
+    "policies": "ポリシー",
+    "cache": "キャッシュ",
+    "costs": "コスト",
+    "security": "セキュリティ",
+    "logs": "ログエクスプローラー",
+    "settings": "設定",
+    "docs": "ドキュメント",
+    "portal": "ポータル"
   }
 }

@@ -75,7 +75,7 @@ export interface CacheStats {
 
 export interface SecurityEvent {
   timestamp: string;
-  user: string;
+  userId: string;
   type: string;
   details: string;
   status: string;

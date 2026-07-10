@@ -1,128 +1,149 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { Settings, Save, AlertCircle, Shield, ShieldCheck, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Settings2, Moon, Sun, Monitor, Globe, Server } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function SettingsPage() {
-  const [budgetLimit, setBudgetLimit] = useState('500.00');
-  const [rateLimit, setRateLimit] = useState('100');
-  const [piiScan, setPiiScan] = useState(true);
-  const [injectionScan, setInjectionScan] = useState(true);
+  const t = useTranslations('Settings');
+  const [theme, setTheme] = useState('dark');
+  const [language, setLanguage] = useState('en');
+  const [defaultModel, setDefaultModel] = useState('llama3.2');
+  const [saved, setSaved] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const { data: config, refetch } = useQuery({
-    queryKey: ['routingConfigSetting'],
-    queryFn: () => api.getRoutingConfig(),
-  });
+  useEffect(() => {
+    // Load from local storage on mount
+    setTheme(localStorage.getItem('theme') || 'dark');
+    setLanguage(localStorage.getItem('language') || 'en');
+    setDefaultModel(localStorage.getItem('defaultModel') || 'llama3.2');
+    setIsLoaded(true);
+  }, []);
 
-  const mutation = useMutation({
-    mutationFn: (newStrategy: string) => api.updateRoutingConfig(newStrategy),
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    }
+  }, [theme, isLoaded]);
 
-  const handleSave = () => {
-    // Notify user or mock save state
-    alert('Settings successfully updated and applied in Gateway routing memory context!');
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('theme', theme);
+    localStorage.setItem('language', language);
+    localStorage.setItem('defaultModel', defaultModel);
+    
+    // Change route if language changed
+    const currentPath = window.location.pathname;
+    const pathWithoutLocale = currentPath.split('/').slice(2).join('/');
+    window.location.href = `/${language}/${pathWithoutLocale}`;
+    
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
   };
 
-  const currentStrategy = config?.strategy || 'balanced';
-
   return (
-    <div className="space-y-8">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-zinc-100">Settings</h1>
-        <p className="text-zinc-500 text-xs mt-1">Configure global rate limit tiers, budget caps, and guardrails.</p>
-      </div>
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
+            <Settings2 className="w-6 h-6 text-blue-500" /> {t('title')}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">{t('description')}</p>
+        </div>
+      </header>
 
-      {/* Main settings options container */}
-      <div className="bg-zinc-900 border border-zinc-850 p-6 rounded-xl space-y-6 max-w-2xl">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Gateway Global parameters</h3>
-
-        <div className="space-y-6 text-xs text-zinc-300">
-          {/* Strategy */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Default Routing Strategy</span>
-            <select
-              value={currentStrategy}
-              onChange={(e) => mutation.mutate(e.target.value)}
-              className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none w-full cursor-pointer"
-            >
-              <option value="balanced">Balanced</option>
-              <option value="cost-optimized">Cost Optimized</option>
-              <option value="latency-optimized">Latency Optimized</option>
-              <option value="high-availability">High Availability</option>
-            </select>
-          </div>
-
-          {/* Budget */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Tenant Monthly Budget Cap (USD)</span>
-            <input
-              type="number"
-              value={budgetLimit}
-              onChange={(e) => setBudgetLimit(e.target.value)}
-              className="p-2.5 bg-zinc-950 border border-zinc-850 rounded-lg text-xs text-zinc-200 focus:outline-none w-full"
-            />
-          </div>
-
-          {/* Rate Limits */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Global Rate Limit Window (Requests / Min)</span>
-            <input
-              type="number"
-              value={rateLimit}
-              onChange={(e) => setRateLimit(e.target.value)}
-              className="p-2.5 bg-zinc-950 border border-zinc-850 rounded-lg text-xs text-zinc-200 focus:outline-none w-full"
-            />
-          </div>
-
-          {/* Guardrails toggles */}
-          <div className="space-y-3 pt-2">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Security Interceptors Guardrails</span>
-
-            <div className="flex items-center justify-between p-3.5 bg-zinc-950 border border-zinc-850 rounded-xl">
-              <div className="space-y-1">
-                <div className="font-bold text-zinc-200">Personally Identifiable Information (PII) Shield</div>
-                <div className="text-[10px] text-zinc-500">Detect and redact Citizen CCCD, Emails, and Vietnamese Phones.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={piiScan}
-                onChange={() => setPiiScan(!piiScan)}
-                className="w-4 h-4 rounded text-blue-600 bg-zinc-900 border-zinc-800"
-              />
+      <form onSubmit={handleSave} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden max-w-3xl">
+        <div className="p-6 space-y-8">
+          
+          {/* Theme */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-zinc-200 border-b border-zinc-800 pb-2">{t('appearance')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${theme === 'dark' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="theme" value="dark" checked={theme === 'dark'} onChange={() => setTheme('dark')} className="hidden" />
+                <Moon className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('darkMode')}</span>
+              </label>
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${theme === 'light' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="theme" value="light" checked={theme === 'light'} onChange={() => setTheme('light')} className="hidden" />
+                <Sun className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('lightMode')}</span>
+              </label>
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${theme === 'system' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="theme" value="system" checked={theme === 'system'} onChange={() => setTheme('system')} className="hidden" />
+                <Monitor className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('systemDefault')}</span>
+              </label>
             </div>
+          </section>
 
-            <div className="flex items-center justify-between p-3.5 bg-zinc-950 border border-zinc-850 rounded-xl">
-              <div className="space-y-1">
-                <div className="font-bold text-zinc-200">Prompt Injection Detector (Jailbreaks)</div>
-                <div className="text-[10px] text-zinc-500">Block prompts attempting to override system instruction scopes.</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={injectionScan}
-                onChange={() => setInjectionScan(!injectionScan)}
-                className="w-4 h-4 rounded text-blue-600 bg-zinc-900 border-zinc-800"
-              />
+          {/* Language */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-zinc-200 border-b border-zinc-800 pb-2">{t('language')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${language === 'en' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="language" value="en" checked={language === 'en'} onChange={() => setLanguage('en')} className="hidden" />
+                <Globe className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('english')}</span>
+              </label>
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${language === 'vi' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="language" value="vi" checked={language === 'vi'} onChange={() => setLanguage('vi')} className="hidden" />
+                <Globe className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('vietnamese')}</span>
+              </label>
+              <label className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-colors ${language === 'ja' ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700'}`}>
+                <input type="radio" name="language" value="ja" checked={language === 'ja'} onChange={() => setLanguage('ja')} className="hidden" />
+                <Globe className="w-6 h-6 mb-2" />
+                <span className="text-sm font-medium">{t('japanese')}</span>
+              </label>
             </div>
-          </div>
+          </section>
+
+          {/* AI Provider Defaults */}
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-zinc-200 border-b border-zinc-800 pb-2">{t('aiProvider')}</h2>
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">{t('defaultModel')}</label>
+              <div className="relative">
+                <Server className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <select 
+                  value={defaultModel}
+                  onChange={e => setDefaultModel(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+                >
+                  <option value="llama3.2">llama3.2 (Local Ollama - FREE)</option>
+                  <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama - FREE)</option>
+                  <option value="gpt-4o">gpt-4o (OpenAI)</option>
+                  <option value="anthropic.claude-3-sonnet">claude-3-sonnet (AWS)</option>
+                </select>
+              </div>
+              <p className="text-xs text-zinc-500 mt-2">{t('modelDesc')}</p>
+            </div>
+          </section>
         </div>
 
-        {/* Save button */}
-        <div className="pt-4 border-t border-zinc-800/40 flex items-center justify-end">
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+        <div className="p-4 bg-zinc-950 border-t border-zinc-800 flex justify-end items-center gap-4">
+          {saved && <span className="text-sm text-emerald-500 font-medium animate-pulse">{t('saved')}</span>}
+          <button 
+            type="submit"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
           >
-            <Save className="w-4 h-4" />
-            <span>Apply Changes</span>
+            <Save className="w-4 h-4" /> {t('saveChanges')}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Shield, Sparkles, AlertCircle, GitFork, Check, ArrowRight, CornerDownRight } from 'lucide-react';
 
 export default function RoutingPage() {
+  const t = useTranslations('Admin');
+  const tRouting = useTranslations('Routing');
   const [selectedNode, setSelectedNode] = useState<string | null>('router');
 
   const { data: config, refetch } = useQuery({
@@ -27,19 +30,19 @@ export default function RoutingPage() {
   const currentStrategy = config?.strategy || 'balanced';
 
   const nodes = [
-    { id: 'scan', label: 'Prompt Scanner', status: 'Success', details: 'Scanning input for script tags and injection patterns.' },
-    { id: 'pii', label: 'PII Detector', status: 'Success', details: 'Vietnamese regex CCCD/phone checker executed. 0 leaks blocked.' },
-    { id: 'policy', label: 'Routing Policy Engine', status: 'Success', details: `Active rules matched. Evaluating strategies against: ${currentStrategy}.` },
-    { id: 'score', label: 'Provider Score Engine', status: 'Success', details: 'Scores calculated: Ollama (92), OpenAI (85), Bedrock (72).' },
-    { id: 'router', label: 'Dynamic Router Decision', status: 'Success', details: 'Selected Ollama local model based on Cost Optimized strategy.' },
-    { id: 'circuit', label: 'Circuit Breaker Check', status: 'Closed', details: 'All circuits verified CLOSED. Proceeding to adapter dispatch.' },
+    { id: 'scan', label: tRouting('scanLabel'), status: tRouting('statusSuccess'), details: tRouting('scanDetails') },
+    { id: 'pii', label: tRouting('piiLabel'), status: tRouting('statusSuccess'), details: tRouting('piiDetails') },
+    { id: 'policy', label: tRouting('policyLabel'), status: tRouting('statusSuccess'), details: tRouting('policyDetails', { strategy: currentStrategy }) },
+    { id: 'score', label: tRouting('scoreLabel'), status: tRouting('statusSuccess'), details: tRouting('scoreDetails') },
+    { id: 'router', label: tRouting('routerLabel'), status: tRouting('statusSuccess'), details: `\${tRouting(currentStrategy === 'latency-optimized' ? 'routerDetailsOpenai' : currentStrategy === 'cost-optimized' ? 'routerDetailsOllama' : currentStrategy === 'high-availability' ? 'routerDetailsClaude' : 'routerDetailsOpenai', { strategy: currentStrategy.replace('-', ' ') })}` },
+    { id: 'circuit', label: tRouting('circuitLabel'), status: tRouting('statusClosed'), details: tRouting('circuitDetails') },
   ];
 
   const strategiesList = [
-    { name: 'balanced', label: 'Balanced Strategy', desc: 'Weights health, latency, and cost variables evenly.' },
-    { name: 'cost-optimized', label: 'Cost Optimized Strategy', desc: 'Prioritizes free/low-cost adapters (Ollama local).' },
-    { name: 'latency-optimized', label: 'Latency Optimized Strategy', desc: 'Routes to fastest response times (OpenAI Cloud).' },
-    { name: 'high-availability', label: 'High Availability Strategy', desc: 'Aggressively avoids failing endpoints using circuit breakers.' },
+    { name: 'balanced', label: tRouting('balancedStrategy'), desc: tRouting('balancedDesc') },
+    { name: 'cost-optimized', label: tRouting('costStrategy'), desc: tRouting('costDesc') },
+    { name: 'latency-optimized', label: tRouting('latencyStrategy'), desc: tRouting('latencyDesc') },
+    { name: 'high-availability', label: tRouting('haStrategy'), desc: tRouting('haDesc') },
   ];
 
   const activeNode = nodes.find(n => n.id === selectedNode);
@@ -48,13 +51,13 @@ export default function RoutingPage() {
     <div className="space-y-8">
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-extrabold text-zinc-100">Routing Center</h1>
-        <p className="text-zinc-500 text-xs mt-1">Visualize global router pathfinding and set global optimization weight strategies.</p>
+        <h1 className="text-2xl font-extrabold text-zinc-100">{t('routing')}</h1>
+        <p className="text-zinc-500 text-xs mt-1">{t('routingDesc')}</p>
       </div>
 
       {/* Global strategy selector panel */}
       <div className="bg-zinc-900 border border-zinc-850 p-6 rounded-xl space-y-6">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Global Routing Strategy</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">{tRouting('globalStrategy')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {strategiesList.map((strat) => {
             const isSelected = currentStrategy === strat.name;
@@ -83,16 +86,16 @@ export default function RoutingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Animated Flow Layout */}
         <div className="lg:col-span-2 bg-zinc-900 border border-zinc-850 p-6 rounded-xl space-y-6 flex flex-col justify-center min-h-[350px]">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Request Routing Pipeline Flow</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">{tRouting('pipelineFlow')}</h3>
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-8">
+          <div className="flex flex-col md:flex-row items-center gap-4 py-8 overflow-x-auto w-full pb-10">
             {nodes.map((node, i) => {
               const isSelected = selectedNode === node.id;
               return (
                 <React.Fragment key={node.id}>
                   <div
                     onClick={() => setSelectedNode(node.id)}
-                    className={`flex flex-col items-center justify-center p-3 text-center border rounded-xl cursor-pointer transition-all duration-150 w-full md:w-32 ${
+                    className={`shrink-0 flex flex-col items-center justify-center p-3 text-center border rounded-xl cursor-pointer transition-all duration-150 w-full md:w-32 ${
                       isSelected
                         ? 'border-blue-500 bg-blue-600/5 ring-1 ring-blue-500/20'
                         : 'border-zinc-800 hover:border-zinc-750 bg-zinc-950/40'
@@ -115,26 +118,26 @@ export default function RoutingPage() {
         {/* Node detail side card */}
         <div className="bg-zinc-900 border border-zinc-850 p-6 rounded-xl space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Node Inspector</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-400">{tRouting('nodeInspector')}</h3>
             <GitFork className="w-4 h-4 text-zinc-500" />
           </div>
 
           {activeNode ? (
             <div className="space-y-4 text-xs">
               <div className="space-y-1">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Stage Name</span>
+                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{tRouting('stageName')}</span>
                 <div className="font-extrabold text-zinc-200 text-sm">{activeNode.label}</div>
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Execution Details</span>
+                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{tRouting('executionDetails')}</span>
                 <p className="text-zinc-400 leading-relaxed bg-zinc-950 p-3.5 rounded-lg border border-zinc-800">
                   {activeNode.details}
                 </p>
               </div>
 
               <div className="space-y-1 pt-2">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">Telemetry Context</span>
+                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">{tRouting('telemetryContext')}</span>
                 <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800/60 font-mono text-[10px] text-zinc-500 space-y-1">
                   <div>status: &quot;success&quot;</div>
                   <div>skipped: false</div>
@@ -145,7 +148,7 @@ export default function RoutingPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-500">
               <GitFork className="w-8 h-8 text-zinc-650 mb-3" />
-              <span>Click on any pipeline node to inspect execution logic details.</span>
+              <span>{tRouting('clickToInspect')}</span>
             </div>
           )}
         </div>

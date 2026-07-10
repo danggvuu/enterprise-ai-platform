@@ -1,8 +1,35 @@
 @import "tailwindcss";
 
+@theme {
+  --color-zinc-50: var(--my-zinc-50);
+  --color-zinc-100: var(--my-zinc-100);
+  --color-zinc-200: var(--my-zinc-200);
+  --color-zinc-300: var(--my-zinc-300);
+  --color-zinc-400: var(--my-zinc-400);
+  --color-zinc-500: var(--my-zinc-500);
+  --color-zinc-600: var(--my-zinc-600);
+  --color-zinc-700: var(--my-zinc-700);
+  --color-zinc-800: var(--my-zinc-800);
+  --color-zinc-900: var(--my-zinc-900);
+  --color-zinc-950: var(--my-zinc-950);
+}
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  /* LIGHT MODE (INVERTED ZINC) */
+  --my-zinc-50: #09090b;
+  --my-zinc-100: #18181b;
+  --my-zinc-200: #27272a;
+  --my-zinc-300: #3f3f46;
+  --my-zinc-400: #52525b;
+  --my-zinc-500: #71717a;
+  --my-zinc-600: #a1a1aa;
+  --my-zinc-700: #d4d4d8;
+  --my-zinc-800: #e4e4e7;
+  --my-zinc-900: #f4f4f5;
+  --my-zinc-950: #fafafa;
+  
+  --background: #fafafa;
+  --foreground: #09090b;
   --card: #18181b;
   --card-foreground: #fafafa;
   --popover: #09090b;
@@ -21,6 +48,24 @@
   --input: #27272a;
   --ring: #2563eb;
   --radius: 0.5rem;
+}
+
+.dark {
+  /* DARK MODE (NORMAL ZINC) */
+  --my-zinc-50: #fafafa;
+  --my-zinc-100: #f4f4f5;
+  --my-zinc-200: #e4e4e7;
+  --my-zinc-300: #d4d4d8;
+  --my-zinc-400: #a1a1aa;
+  --my-zinc-500: #71717a;
+  --my-zinc-600: #52525b;
+  --my-zinc-700: #3f3f46;
+  --my-zinc-800: #27272a;
+  --my-zinc-900: #18181b;
+  --my-zinc-950: #09090b;
+
+  --background: #09090b;
+  --foreground: #fafafa;
 }
 
 body {
