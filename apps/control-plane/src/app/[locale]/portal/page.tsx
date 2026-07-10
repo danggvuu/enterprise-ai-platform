@@ -10,6 +10,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { AnimateIn } from '@/components/ui/animate-in';
+import { MagneticButton } from '@/components/ui/magnetic-button';
 
 function PortalChatContent() {
   const searchParams = useSearchParams();
@@ -292,8 +294,10 @@ function PortalChatContent() {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((msg) => (
-            <div
+            <AnimateIn
               key={msg.id}
+              direction="up"
+              duration={0.4}
               className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
             >
               <div
@@ -403,14 +407,18 @@ function PortalChatContent() {
                   </div>
                 </details>
               )}
-            </div>
+            </AnimateIn>
           ))}
 
           {loading && (
-            <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900 border border-zinc-850 p-3.5 rounded-lg w-max animate-pulse">
-              <RefreshCw className="w-3.5 h-3.5 text-blue-500 animate-spin" />
-              <span>Gateway is evaluating policies and generating response...</span>
-            </div>
+            <AnimateIn direction="up" className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900 border border-zinc-850 p-3.5 rounded-lg w-max shadow-lg">
+              <span className="flex gap-1 items-center justify-center">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
+              </span>
+              <span className="ml-2">Gateway is evaluating policies and generating response...</span>
+            </AnimateIn>
           )}
 
           <div ref={messagesEndRef} />
@@ -461,13 +469,13 @@ function PortalChatContent() {
               rows={1}
               disabled={loading}
             />
-            <button
+            <MagneticButton
               type="submit"
               disabled={loading || (!input.trim() && !selectedFile)}
               className="p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-blue-600 text-white rounded-lg cursor-pointer transition-colors"
             >
               <Send className="w-4 h-4" />
-            </button>
+            </MagneticButton>
           </div>
         </form>
       </footer>

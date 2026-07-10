@@ -13,6 +13,12 @@
   --color-zinc-800: var(--my-zinc-800);
   --color-zinc-900: var(--my-zinc-900);
   --color-zinc-950: var(--my-zinc-950);
+
+  --animate-shimmer: shimmer 1.5s infinite;
+  
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
 }
 
 :root {

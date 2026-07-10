@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { AlertCircle, Clock, Shield, Coins, Database, Activity, RefreshCw } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, Tooltip, Area } from 'recharts';
+import { AnimateIn, AnimateChild } from '@/components/ui/animate-in';
+import { PageTransition } from '@/components/ui/page-transition';
 
 export default function DashboardPage() {
   const t = useTranslations('Admin');
@@ -66,8 +68,9 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Title */}
+    <PageTransition>
+      <div className="space-y-8">
+        {/* Title */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-zinc-100">Operational Dashboard</h1>
@@ -83,22 +86,25 @@ export default function DashboardPage() {
       </div>
 
       {/* Grid stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <AnimateIn staggerChildren={0.05} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={i} className="bg-zinc-900 border border-zinc-850 p-5 rounded-xl flex items-center justify-between">
-              <div className="space-y-2">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{card.title}</span>
-                <div className="text-2xl font-extrabold text-zinc-100">{card.value}</div>
+            <AnimateChild key={i}>
+              <div className="group relative bg-zinc-900 border border-zinc-850 p-5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <div className="space-y-2 relative z-10">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{card.title}</span>
+                  <div className="text-2xl font-extrabold text-zinc-100">{card.value}</div>
+                </div>
+                <div className={`p-3 bg-zinc-950 border border-zinc-800 rounded-lg ${card.color} relative z-10 transition-transform duration-500 group-hover:scale-110`}>
+                  <Icon className="w-5 h-5" />
+                </div>
               </div>
-              <div className={`p-3 bg-zinc-950 border border-zinc-800 rounded-lg ${card.color}`}>
-                <Icon className="w-5 h-5" />
-              </div>
-            </div>
+            </AnimateChild>
           );
         })}
-      </div>
+      </AnimateIn>
 
       {/* Charts section */}
       <div className="grid grid-cols-1 gap-8">
@@ -167,7 +173,8 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
