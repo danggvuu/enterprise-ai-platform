@@ -256,6 +256,8 @@ function PortalChatContent() {
               <option value="llama3.2">llama3.2 (Local Ollama)</option>
               <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama)</option>
               <option value="gpt-4o">gpt-4o (OpenAI Cloud)</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro (Google Gemini)</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash (Google Gemini)</option>
               <option value="anthropic.claude-3-sonnet">claude-3 (AWS Bedrock)</option>
             </select>
           </div>
