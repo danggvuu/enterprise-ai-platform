@@ -141,6 +141,27 @@ export const api = {
     });
   },
 
+  chatCompletionStream(messages: any[], model: string, strategy: string, conversationId?: string): Promise<Response> {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-routing-strategy': strategy,
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return fetch(`${BASE_URL}/v1/chat/stream`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model,
+        messages,
+        conversationId
+      }),
+    });
+  },
+
   uploadFile(file: File): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);

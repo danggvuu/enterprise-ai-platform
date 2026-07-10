@@ -142,49 +142,84 @@ function PortalChatContent() {
         { role: 'user', content: userMessageContent }
       ];
 
-      const res = await api.chatCompletion(chatPayload, model, strategy, conversationId || undefined);
+      const response = await api.chatCompletionStream(chatPayload, model, strategy, conversationId || undefined);
 
-      if (!conversationId && res.conversationId) {
-        window.history.replaceState(null, '', `/en/portal?c=${res.conversationId}`);
+      if (!response.ok) {
+        throw new Error('Stream request failed');
       }
 
-      const isOllama = res.id?.includes('ollama') || model === 'llama3.2' || model === 'qwen2.5:3b';
-      const isCache = res.choices?.[0]?.finish_reason === 'stop' && res.id?.startsWith('cache-'); 
+      if (!response.body) throw new Error('No response body');
 
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: res.choices?.[0]?.message?.content || 'No response content returned.',
-        timestamp: new Date().toISOString(),
-        executionDetails: {
-          providerId: isOllama ? 'ollama' : 'openai',
-          modelId: model,
-          latencyMs: res.usage ? 450 : 12, 
-          costUsd: res.usage ? (isOllama ? 0 : 0.00012) : 0,
-          cacheHit: !!isCache,
-          piiDetected: false,
-          injectionDetected: false,
-          strategy,
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      const assistantMessageId = `assistant-${Date.now()}`;
+      setMessages(prev => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date().toISOString(),
+          executionDetails: {
+            providerId: '...',
+            modelId: model,
+            latencyMs: 0,
+            costUsd: 0,
+            cacheHit: false,
+            piiDetected: false,
+            injectionDetected: false,
+            strategy,
+          }
         }
-      };
+      ]);
 
-      setMessages(prev => [...prev, assistantMessage]);
+      let done = false;
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+          
+          for (const line of lines) {
+            const dataStr = line.replace('data: ', '').trim();
+            if (dataStr === '[DONE]') {
+              break;
+            }
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.conversationId && !conversationId) {
+                window.history.replaceState(null, '', `/${locale}/portal?c=${parsed.conversationId}`);
+              }
+              if (parsed.error) {
+                 setMessages(prev => prev.map(msg => 
+                    msg.id === assistantMessageId 
+                      ? { ...msg, content: msg.content + `\n\n**Error:** ${parsed.error}` } 
+                      : msg
+                 ));
+              }
+              if (parsed.text) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: msg.content + parsed.text } 
+                    : msg
+                ));
+              }
+            } catch (e) {
+              console.error('Failed to parse SSE chunk', e);
+            }
+          }
+        }
+      }
     } catch (err: any) {
-      let content = `Error: ${err.message || 'Failed to process request.'}`;
-      if (err.recoveryHint) {
-        content += `\n\n*Hint: ${err.recoveryHint}*`;
-      }
-      if (err.code) {
-        content = `[${err.code}] ${content}`;
-      }
-
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
+      console.error(err);
+      setMessages(prev => [...prev, {
+        id: `sys-${Date.now()}`,
         role: 'assistant',
-        content,
+        content: `**Error:** Failed to reach Gateway. ${err.message}`,
         timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setLoading(false);
     }

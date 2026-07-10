@@ -54,7 +54,7 @@ export default function CostsPage() {
         <div className="bg-zinc-900 border border-zinc-850 p-5 rounded-xl space-y-2 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Ollama Local Savings</span>
-            <div className="text-2xl font-extrabold text-emerald-400">${costs.savings.local.toFixed(4)}</div>
+            <div className="text-2xl font-extrabold text-emerald-400">${costs.savings.ollama.toFixed(4)}</div>
           </div>
           <PiggyBank className="w-8 h-8 text-emerald-500 bg-emerald-500/10 p-1.5 rounded-lg border border-emerald-500/20" />
         </div>
