@@ -43,7 +43,8 @@
     "signOut": "Đăng Xuất",
     "emptyState": "Xin chào! Tôi là Trợ lý AI Doanh nghiệp. Tôi có thể giúp bạn đánh giá code, tóm tắt tài liệu, phân tích dữ liệu và trả lời câu hỏi. Mọi truy vấn đều đi qua Gateway bảo mật và bộ lọc tuân thủ tự động.",
     "model": "MÔ HÌNH",
-    "strategy": "CHIẾN LƯỢC"
+    "strategy": "CHIẾN LƯỢC",
+    "folders": "Thư mục"
   },
   "Settings": {
     "title": "Cài đặt hệ thống",

@@ -5,7 +5,7 @@ const BASE_URL = typeof window !== 'undefined'
   ? (window as any).__API_URL || process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8080`
   : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-const getAuthToken = () => {
+export const getAuthToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('token');
   }
@@ -87,6 +87,27 @@ export const api = {
 
   getMe(): Promise<any> {
     return fetchJson<any>('/v1/auth/me');
+  },
+
+  updateMe(data: any): Promise<any> {
+    return fetchJson<any>('/v1/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  },
+
+  forgotPassword(email: string): Promise<any> {
+    return fetchJson<any>('/v1/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  },
+
+  resetPassword(data: any): Promise<any> {
+    return fetchJson<any>('/v1/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   },
 
   // Portal
@@ -173,7 +194,7 @@ export const api = {
   },
 
   getAdminUsers(): Promise<any[]> {
-    return fetchJson<any[]>('/v1/admin/users');
+    return fetchJson<any>('/v1/admin/users').then(res => res.data || []);
   },
 
   getOrganizations(): Promise<any[]> {
@@ -267,7 +288,7 @@ export const api = {
 
   // Users
   getUsers(): Promise<any[]> {
-    return fetchJson<any[]>('/v1/admin/users');
+    return fetchJson<any>('/v1/admin/users').then(res => res.data || []);
   },
 
   createUser(data: any): Promise<any> {
@@ -342,6 +363,7 @@ export const api = {
   },
 
   // Folders
+
   createFolder(name: string): Promise<any> {
     return fetchJson<any>('/v1/portal/folders', {
       method: 'POST',
@@ -352,6 +374,13 @@ export const api = {
   deleteFolder(id: string): Promise<any> {
     return fetchJson<any>(`/v1/portal/folders/${id}`, {
       method: 'DELETE'
+    });
+  },
+
+  moveConversationToFolder(id: string, folderId: string | null): Promise<any> {
+    return fetchJson<any>(`/v1/portal/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ folderId })
     });
   },
 

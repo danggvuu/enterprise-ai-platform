@@ -8,6 +8,7 @@ import { ProviderInfo } from '@/lib/types';
 import { Shield, Sparkles, CheckCircle, XCircle, Database, AlertOctagon, HelpCircle, ArrowUpRight, Plus, Trash2 } from 'lucide-react';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import ProviderForm from './ProviderForm';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function ProvidersPage() {
   const t = useTranslations('Admin');
@@ -65,6 +66,41 @@ export default function ProvidersPage() {
 
   const selectedProvider = providers.find(p => p.id === selectedProviderId) || providers[0];
 
+  if (!selectedProvider) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-extrabold text-zinc-100">{t('providers')}</h1>
+            <p className="text-zinc-500 text-xs mt-1">{t('providersDesc')}</p>
+          </div>
+          <button 
+            onClick={() => setShowAddForm(true)}
+            className="bg-white hover:bg-zinc-200 text-black px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Custom Provider
+          </button>
+        </div>
+        {showAddForm && (
+          <ErrorBoundary fallback={<div className="p-4 bg-red-950 text-red-500">Failed to load Provider Form</div>}>
+            <ProviderForm 
+              onSuccess={() => { setShowAddForm(false); refetch(); }} 
+              onCancel={() => setShowAddForm(false)} 
+            />
+          </ErrorBoundary>
+        )}
+        <div className="flex flex-col items-center justify-center p-12 bg-zinc-900 border border-zinc-850 rounded-xl text-center space-y-4">
+          <Database className="w-12 h-12 text-zinc-700" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-zinc-400">No Providers Found</h3>
+            <p className="text-xs text-zinc-500 max-w-md">You have not configured any AI providers yet. Click 'Add Custom Provider' to start connecting to OpenAI, Anthropic, or local endpoints.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Scoring weights representation in Radar (Mock scores based on real specs)
   const scoreData = selectedProviderId === 'openai'
     ? [
@@ -113,10 +149,12 @@ export default function ProvidersPage() {
       </div>
 
       {showAddForm && (
-        <ProviderForm 
-          onSuccess={() => { setShowAddForm(false); refetch(); }} 
-          onCancel={() => setShowAddForm(false)} 
-        />
+        <ErrorBoundary fallback={<div className="p-4 bg-red-950 text-red-500">Failed to load Provider Form</div>}>
+          <ProviderForm 
+            onSuccess={() => { setShowAddForm(false); refetch(); }} 
+            onCancel={() => setShowAddForm(false)} 
+          />
+        </ErrorBoundary>
       )}
 
       {/* Grid of providers */}

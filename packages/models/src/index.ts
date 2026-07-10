@@ -4,6 +4,7 @@ export * from './adapters/bedrock';
 export * from './adapters/ollama';
 export * from './routing';
 export * from './security/encryption';
+export * from './ProviderFactory';
 
 import { OpenAIAdapter } from './adapters/openai';
 import { BedrockAdapter } from './adapters/bedrock';

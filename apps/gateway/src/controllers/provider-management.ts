@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '@ai-gateway/database';
-import { encrypt } from '@enterprise/models';
+import { encrypt, ProviderFactory } from '@enterprise/models';
 
 export default async function providerManagementRoutes(fastify: FastifyInstance) {
   fastify.addHook('preValidation', (fastify as any).authenticate);
@@ -18,59 +18,11 @@ export default async function providerManagementRoutes(fastify: FastifyInstance)
     const { providerType, baseUrl, apiKey } = request.body as any;
     
     try {
-      if (providerType === 'OLLAMA') {
-        const url = baseUrl || 'http://127.0.0.1:11434';
-        const res = await fetch(`${url}/api/tags`);
-        if (!res.ok) throw new Error(`Ollama returned status ${res.status}`);
-        return { success: true, message: 'Connection successful' };
+      const isSuccess = await ProviderFactory.testConnection(providerType, apiKey || '', baseUrl);
+      if (!isSuccess) {
+        return reply.status(400).send({ success: false, error: 'Connection failed or invalid API key' });
       }
-      
-      if (providerType === 'AZURE_OPENAI') {
-        if (!baseUrl) throw new Error('AZURE_OPENAI requires a baseUrl');
-        const res = await fetch(`${baseUrl}/openai/deployments?api-version=2024-02-01`, {
-          headers: { 'api-key': apiKey }
-        });
-        if (!res.ok) throw new Error(`Azure returned status ${res.status}`);
-        return { success: true, message: 'Connection successful' };
-      }
-
-      if (providerType === 'GOOGLE_GEMINI') {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-        );
-        if (!res.ok) throw new Error(`Google Gemini returned status ${res.status}`);
-        return { success: true, message: 'Connection successful' };
-      }
-
-      // OpenAI-compatible providers
-      const openaiCompatible = [
-        'OPENAI', 'CUSTOM', 'ANTHROPIC', 'OPENROUTER', 'GROQ',
-        'TOGETHER', 'FIREWORKS', 'MISTRAL', 'DEEPSEEK', 'LM_STUDIO', 'VLLM', 'LOCAL_AI'
-      ];
-      if (openaiCompatible.includes(providerType)) {
-        const defaultUrls: Record<string, string> = {
-          OPENAI: 'https://api.openai.com',
-          ANTHROPIC: 'https://api.anthropic.com',
-          OPENROUTER: 'https://openrouter.ai/api',
-          GROQ: 'https://api.groq.com/openai',
-          TOGETHER: 'https://api.together.xyz',
-          FIREWORKS: 'https://api.fireworks.ai/inference',
-          MISTRAL: 'https://api.mistral.ai',
-          DEEPSEEK: 'https://api.deepseek.com',
-          LM_STUDIO: 'http://localhost:1234',
-          VLLM: 'http://localhost:8000',
-          LOCAL_AI: 'http://localhost:8080',
-          CUSTOM: 'https://api.openai.com',
-        };
-        const resolvedBase = (baseUrl || defaultUrls[providerType] || 'https://api.openai.com').replace(/\/v1$/, '');
-        const res = await fetch(`${resolvedBase}/v1/models`, {
-          headers: { Authorization: `Bearer ${apiKey}` }
-        });
-        if (!res.ok) throw new Error(`Provider returned status ${res.status}`);
-        return { success: true, message: 'Connection successful' };
-      }
-
-      return reply.status(400).send({ error: `Testing for ${providerType} not implemented yet` });
+      return { success: true, message: 'Connection successful' };
     } catch (e: any) {
       return reply.status(400).send({ success: false, error: e.message });
     }
@@ -81,77 +33,9 @@ export default async function providerManagementRoutes(fastify: FastifyInstance)
   // --------------------------------------------------------
   fastify.post('/v1/admin/providers/discover', async (request, reply) => {
     const { providerType, baseUrl, apiKey } = request.body as any;
-    let models: string[] = [];
     
     try {
-      if (providerType === 'OLLAMA') {
-        const url = baseUrl || 'http://127.0.0.1:11434';
-        const res = await fetch(`${url}/api/tags`);
-        if (!res.ok) throw new Error(`Ollama returned status ${res.status}`);
-        const data = await res.json();
-        models = data.models?.map((m: any) => m.name) || [];
-
-      } else if (providerType === 'ANTHROPIC') {
-        models = [
-          'claude-opus-4-5',
-          'claude-sonnet-4-5',
-          'claude-haiku-3-5',
-          'claude-3-opus-20240229',
-          'claude-3-sonnet-20240229',
-          'claude-3-haiku-20240307',
-        ];
-
-      } else if (providerType === 'GOOGLE_GEMINI') {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-        );
-        if (!res.ok) throw new Error(`Google Gemini returned status ${res.status}`);
-        const data = await res.json();
-        models = (data.models || [])
-          .map((m: any) => m.name as string)
-          .filter((name: string) => name.includes('gemini'));
-
-      } else if (providerType === 'DEEPSEEK') {
-        models = ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'];
-
-      } else if (providerType === 'FIREWORKS') {
-        models = [
-          'accounts/fireworks/models/llama-v3p1-70b-instruct',
-          'accounts/fireworks/models/mixtral-8x7b-instruct',
-          'accounts/fireworks/models/qwen2p5-72b-instruct',
-        ];
-
-      } else if (providerType === 'AZURE_OPENAI') {
-        if (!baseUrl) throw new Error('AZURE_OPENAI requires a baseUrl');
-        const res = await fetch(`${baseUrl}/openai/deployments?api-version=2024-02-01`, {
-          headers: { 'api-key': apiKey }
-        });
-        if (!res.ok) throw new Error(`Azure returned status ${res.status}`);
-        const data = await res.json();
-        models = (data.value || []).map((d: any) => d.id || d.model);
-
-      } else {
-        // OpenAI-compatible: OPENAI, CUSTOM, OPENROUTER, GROQ, TOGETHER, MISTRAL, LM_STUDIO, VLLM, LOCAL_AI
-        const defaultUrls: Record<string, string> = {
-          OPENAI: 'https://api.openai.com/v1',
-          CUSTOM: baseUrl || 'https://api.openai.com/v1',
-          OPENROUTER: 'https://openrouter.ai/api/v1',
-          GROQ: 'https://api.groq.com/openai/v1',
-          TOGETHER: 'https://api.together.xyz/v1',
-          MISTRAL: 'https://api.mistral.ai/v1',
-          LM_STUDIO: 'http://localhost:1234/v1',
-          VLLM: 'http://localhost:8000/v1',
-          LOCAL_AI: 'http://localhost:8080/v1',
-        };
-        const url = baseUrl || defaultUrls[providerType] || 'https://api.openai.com/v1';
-        const res = await fetch(`${url}/models`, {
-          headers: { Authorization: `Bearer ${apiKey}` }
-        });
-        if (!res.ok) throw new Error(`Provider returned status ${res.status}`);
-        const data = await res.json();
-        models = data.data?.map((m: any) => m.id) || [];
-      }
-      
+      const models = await ProviderFactory.discoverModels(providerType, apiKey || '', baseUrl);
       return { success: true, models };
     } catch (e: any) {
       return reply.status(400).send({ success: false, error: e.message });
