@@ -141,15 +141,17 @@ export default function Home() {
             <span>Enterprise AI Gateway</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-zinc-50 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-            {step === 1 ? 'System Requirements' : needsSetup ? 'Gateway Initial Setup' : 'Secure Authentication'}
+            {step === 1 ? 'System Requirements' : needsSetup && step !== 4 ? 'Gateway Initial Setup' : step === 4 ? 'Create an Account' : 'Secure Authentication'}
           </h1>
           <p className="text-sm text-zinc-400 mt-2">
             {step === 1 
               ? 'Verifying infrastructure dependencies before proceeding.'
-              : needsSetup 
+              : needsSetup && step !== 4
               ? 'Welcome to the Enterprise AI Gateway. Create the first Organization Admin account.'
               : step === 3
               ? 'Enter your email address to receive a password reset link.'
+              : step === 4
+              ? 'Sign up to create a new workspace and start using the platform.'
               : 'Sign in to access your Enterprise AI workspaces and control plane.'}
           </p>
         </div>
@@ -283,10 +285,10 @@ export default function Home() {
           </form>
         ) : (
           <form 
-            onSubmit={needsSetup ? handleSetup : handleLogin} 
+            onSubmit={(needsSetup || step === 4) ? handleSetup : handleLogin} 
             className="w-full flex flex-col gap-4 bg-zinc-900/50 border border-zinc-850 p-6 rounded-2xl backdrop-blur-sm"
           >
-            {needsSetup && (
+            {(needsSetup || step === 4) && (
               <>
                 <div className="space-y-1 text-left">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Organization Name</label>
@@ -344,7 +346,7 @@ export default function Home() {
             <div className="space-y-1 text-left">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Password</label>
-                {!needsSetup && (
+                {(!needsSetup && step !== 4) && (
                   <button
                     type="button"
                     onClick={() => setStep(3)}
@@ -374,9 +376,9 @@ export default function Home() {
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-              ) : needsSetup ? (
+              ) : (needsSetup || step === 4) ? (
                 <>
-                  <span>Initialize Platform</span>
+                  <span>{step === 4 ? 'Sign Up' : 'Initialize Platform'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               ) : (
@@ -386,6 +388,31 @@ export default function Home() {
                 </>
               )}
             </button>
+            
+            {step === 2 && !needsSetup && (
+              <div className="text-center mt-2 border-t border-zinc-800/50 pt-4">
+                <span className="text-xs text-zinc-500">Don't have an account? </span>
+                <button
+                  type="button"
+                  onClick={() => setStep(4)}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+            {step === 4 && (
+              <div className="text-center mt-2 border-t border-zinc-800/50 pt-4">
+                <span className="text-xs text-zinc-500">Already have an account? </span>
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Sign In
+                </button>
+              </div>
+            )}
           </form>
         )}
 
