@@ -1,0 +1,20 @@
+{
+  "name": "@enterprise/cache",
+  "version": "1.0.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && node --test dist/tests/**/*.spec.js"
+  },
+  "dependencies": {
+    "@enterprise/errors": "workspace:*",
+    "@enterprise/logger": "workspace:*",
+    "@enterprise/models": "workspace:*",
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  }
+}

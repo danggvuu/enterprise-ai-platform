@@ -1,0 +1,19 @@
+{
+  "Common": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "settings": "設定",
+    "save": "保存",
+    "cancel": "キャンセル"
+  },
+  "Dashboard": {
+    "title": "ダッシュボード",
+    "totalRequests": "総リクエスト数",
+    "activeUsers": "アクティブユーザー数"
+  },
+  "Portal": {
+    "title": "従業員ポータル",
+    "newChat": "新しいチャット",
+    "placeholder": "何でも聞いてください..."
+  }
+}

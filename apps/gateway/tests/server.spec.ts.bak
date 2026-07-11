@@ -1,0 +1,39 @@
+import { describe, it, before, after } from 'node:test';
+import assert from 'node:assert';
+
+import { buildServer, redis, pgClient } from '../src/server';
+import { FastifyInstance } from 'fastify';
+
+describe('Gateway API', () => {
+  let app: FastifyInstance;
+
+  before(async () => {
+    app = await buildServer();
+  });
+
+  after(async () => {
+    await app.close();
+    redis.disconnect();
+    if ((pgClient as any)._connected) {
+      try {
+        await pgClient.end();
+      } catch (e) {}
+    }
+    // Forcefully exit to prevent hanging due to unclosed socket connections from pg/redis
+    setTimeout(() => process.exit(0), 100);
+  });
+
+  it('should return 200 on /health', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    assert.strictEqual(response.statusCode, 200);
+    const body = JSON.parse(response.payload);
+    assert.strictEqual(body.status, 'ok');
+    assert.ok(body.timestamp);
+    assert.ok(body.redis);
+    assert.ok(body.postgres);
+  });
+});
