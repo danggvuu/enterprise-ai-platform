@@ -111,6 +111,8 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
                 >
                   <option value="OPENAI">OpenAI Compatible (OpenRouter, Groq, Together)</option>
                   <option value="OLLAMA">Ollama (Local / Remote)</option>
+                  <option value="GOOGLE_GEMINI">Google Gemini</option>
+                  <option value="ANTHROPIC">Anthropic Claude</option>
                 </select>
               </div>
               <div className="space-y-1 col-span-2">
