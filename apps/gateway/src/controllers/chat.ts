@@ -277,10 +277,20 @@ export default async function chatRoutes(fastify: FastifyInstance) {
     if (response && response.usage) {
       metrics.totalTokens += response.usage.total_tokens;
       tokens = response.usage.total_tokens;
-      const tracker = new CostTracker();
-      const costData = tracker.calculateCost(payload.model, response.usage);
-      metrics.totalCostUsd += costData.total_cost_usd;
-      cost = costData.total_cost_usd;
+      
+      const isFree = finalDecision?.providerId?.toLowerCase().includes('groq') || 
+                     finalDecision?.providerId === 'ollama' || 
+                     payload.model.endsWith(':free');
+
+      let calculatedCost = 0;
+      if (!isFree) {
+        const tracker = new CostTracker();
+        const costData = tracker.calculateCost(payload.model, response.usage);
+        calculatedCost = costData.total_cost_usd;
+      }
+      
+      metrics.totalCostUsd += calculatedCost;
+      cost = calculatedCost;
     }
     
     if (response && response.choices) {
@@ -450,6 +460,25 @@ export default async function chatRoutes(fastify: FastifyInstance) {
 
     // After stream finishes, save to DB
     safeDbWrite(async () => {
+      const estimatedPromptTokens = Math.ceil(JSON.stringify(payload.messages).length / 4);
+      const estimatedCompletionTokens = Math.ceil(fullResponse.length / 4);
+      const tokens = estimatedPromptTokens + estimatedCompletionTokens;
+      
+      const isFree = decision.providerId?.toLowerCase().includes('groq') || 
+                     decision.providerId === 'ollama' || 
+                     payload.model.endsWith(':free');
+
+      let calculatedCost = 0;
+      if (!isFree) {
+        const tracker = new CostTracker();
+        const costData = tracker.calculateCost(payload.model, { 
+          prompt_tokens: estimatedPromptTokens, 
+          completion_tokens: estimatedCompletionTokens, 
+          total_tokens: tokens 
+        });
+        calculatedCost = costData.total_cost_usd;
+      }
+      
       if (conversationId && fullResponse) {
         await prisma.message.create({
           data: {
@@ -460,12 +489,33 @@ export default async function chatRoutes(fastify: FastifyInstance) {
             providerId: decision.providerId,
             modelId: decision.modelId,
             latencyMs: latency,
-            costUsd: 0,
+            costUsd: calculatedCost,
             isCacheHit: false,
             routingReason: strategy
           }
         });
       }
+      
+      const successLog = await prisma.logTrace.create({
+        data: {
+          traceId: `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+          userId,
+          organizationId: orgId,
+          prompt: payload.messages[payload.messages.length - 1]?.content || '',
+          providerId: decision.providerId,
+          modelId: decision.modelId,
+          routingStrategy: strategy,
+          latencyMs: latency,
+          costUsd: calculatedCost,
+          tokens,
+          isCacheHit: false,
+          piiDetected,
+          injectionDetected: false,
+          status: 'SUCCESS',
+          responseText: fullResponse
+        }
+      });
+      publishSSE('request', successLog);
     });
   });
 
