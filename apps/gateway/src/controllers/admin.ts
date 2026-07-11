@@ -520,7 +520,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     return {
       daily,
       byProvider,
-      savings: { cache: cacheSavings, local: 0, routing: 0 }
+      savings: { cache: cacheSavings, ollama: 0, routing: 0 }
     };
   });
 
