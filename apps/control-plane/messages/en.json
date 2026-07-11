@@ -43,7 +43,8 @@
     "signOut": "Sign Out",
     "emptyState": "Hello! I am your Enterprise AI Assistant. I can help with code reviews, summarizing documents, data analysis, and general Q&A. All queries run through the secure Gateway with automatic compliance filters.",
     "model": "MODEL",
-    "strategy": "STRATEGY"
+    "strategy": "STRATEGY",
+    "folders": "Folders"
   },
   "Settings": {
     "title": "Platform Settings",

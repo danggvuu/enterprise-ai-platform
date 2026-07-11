@@ -1,16 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { LayoutDashboard, Activity, Database, GitMerge, FileCheck, Shield, BarChart3, Settings, BookOpen, Key, Users, History, AlertOctagon, Terminal, Building, Beaker } from 'lucide-react';
+import { LayoutDashboard, Activity, Database, GitMerge, FileCheck, Shield, BarChart3, Settings, BookOpen, Key, Users, History, AlertOctagon, Terminal, Building, Beaker, User, LogOut } from 'lucide-react';
+import { api } from '@/lib/api';
+import { ProfileModal } from '@/components/profile/ProfileModal';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('Sidebar');
   const [collapsed, setCollapsed] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const me = await api.getMe();
+        setUser(me);
+      } catch (err) {
+        console.error('Failed to load admin user data', err);
+      }
+    };
+    init();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/');
+  };
 
   const navigation = [
     { name: t('dashboard'), href: `/${locale}/admin/dashboard`, icon: LayoutDashboard },
@@ -26,6 +48,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: t('logs'), href: `/${locale}/admin/logs`, icon: Terminal },
     { name: 'AI Playground', href: `/${locale}/admin/playground`, icon: Beaker },
     { name: 'API Keys', href: `/${locale}/admin/api-keys`, icon: Key },
+    { name: 'Model Catalog', href: `/${locale}/admin/models`, icon: Database },
+    { name: 'Benchmark Lab', href: `/${locale}/admin/benchmark`, icon: Activity },
     { name: t('settings'), href: `/${locale}/admin/settings`, icon: Settings },
     { name: t('docs'), href: `/${locale}/admin/docs`, icon: BookOpen },
   ];
@@ -62,20 +86,54 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        <div className="p-4 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500 bg-zinc-900/10">
-          <span>Control Plane v1.0.0</span>
-          <Link href={`/${locale}/portal`} className="hover:text-zinc-300 font-semibold">&larr; {t('portal')}</Link>
+        <div className="p-4 border-t border-zinc-900 flex flex-col gap-3 bg-zinc-900/10">
+          <div className="flex items-center gap-3">
+            <div 
+              onClick={() => setIsProfileOpen(true)}
+              className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 shrink-0 cursor-pointer hover:bg-zinc-700 transition-colors"
+            >
+              <User className="w-4 h-4 text-zinc-300" />
+            </div>
+            {user && (
+              <div className="flex flex-col truncate">
+                <span className="text-xs font-semibold text-zinc-200 truncate">{user.firstName} {user.lastName}</span>
+                <span className="text-[10px] text-zinc-500 truncate">{user.email}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Link
+              href={`/${locale}/portal`}
+              className="flex items-center gap-2 p-2 hover:bg-zinc-900 text-xs text-blue-400 hover:text-blue-300 rounded-lg cursor-pointer"
+            >
+              <span>&larr; {t('portal')}</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 p-2 hover:bg-zinc-900 text-xs text-zinc-400 hover:text-zinc-200 rounded-lg cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-zinc-950">
+      <div className="flex-1 flex flex-col overflow-hidden bg-zinc-950 relative z-10">
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="max-w-6xl mx-auto space-y-8">
             {children}
           </div>
         </main>
       </div>
+      
+      <ProfileModal 
+        user={user} 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+        onUpdate={setUser} 
+      />
     </div>
   );
 }

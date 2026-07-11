@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, getAuthToken } from '@/lib/api';
 import { RequestLog } from '@/lib/types';
 import { AlertCircle, Clock, Shield, Coins, Search, Terminal, ArrowDownCircle, RefreshCw } from 'lucide-react';
 
@@ -27,7 +27,8 @@ export default function MonitorPage() {
 
   // Connect SSE for real-time log stream
   useEffect(() => {
-    const sseUrl = `${api.getBaseUrl()}/v1/admin/events`;
+    let token = getAuthToken();
+    const sseUrl = `${api.getBaseUrl()}/v1/admin/events${token ? `?token=${token}` : ''}`;
     const eventSource = new EventSource(sseUrl);
 
     eventSource.addEventListener('request', (e: MessageEvent) => {

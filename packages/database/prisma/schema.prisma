@@ -15,20 +15,20 @@ model Organization {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  routingStrategy String @default("balanced")
-  defaultModel    String @default("llama3.2")
-
-
-  users       User[]
-  departments Department[]
-  apiKeys     ApiKey[]
-  policies    Policy[]
-  providers   ProviderConfig[]
-  budget      Budget?
+  routingStrategy String  @default("balanced") // cost, latency, balanced
+  
+  users          User[]
+  departments    Department[]
+  providers      ProviderConfig[]
+  apiKeys        ApiKey[]
+  policies       Policy[]
+  budget         Budget?
+  promptTemplates PromptTemplate[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Department {
@@ -45,7 +45,7 @@ model Department {
 
 model User {
   id             String       @id @default(cuid())
-  email          String       @unique
+  email          String
   passwordHash   String?
   firstName      String?
   lastName       String?
@@ -55,15 +55,19 @@ model User {
   role           Role         @default(EMPLOYEE)
   isActive       Boolean      @default(true)
   lastLoginAt    DateTime?
+  
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  conversations  Conversation[]
+  folders        Folder[]
+  sessions       Session[]
+  passwordResetTokens PasswordResetToken[]
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
 
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  department     Department?   @relation(fields: [departmentId], references: [id])
-  sessions       Session[]
-  conversations  Conversation[]
-  folders        Folder[]
+  @@unique([email, organizationId])
 }
 
 enum Role {
@@ -98,6 +102,16 @@ model ApiKey {
   updatedAt      DateTime     @updatedAt
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // --------------------------------------------------------
@@ -195,13 +209,16 @@ enum StorageType {
 }
 
 model PromptTemplate {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  content     String
-  isGlobal    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  content        String
+  isGlobal       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 // --------------------------------------------------------

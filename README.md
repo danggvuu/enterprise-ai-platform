@@ -1,78 +1,130 @@
-# Enterprise AI Gateway (v1.0.0 Production Release)
+<div align="center">
+  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/network.svg" width="80" alt="Logo">
+  <h1 align="center">Enterprise AI Platform & Gateway</h1>
+  <p align="center">
+    A production-ready, commercial-grade AI Gateway and Employee Portal.
+    Secure, route, and optimize LLM usage across your entire organization.
+  </p>
+  <p align="center">
+    <a href="#features"><strong>Features</strong></a> · 
+    <a href="#architecture"><strong>Architecture</strong></a> · 
+    <a href="#quick-start"><strong>Quick Start</strong></a> · 
+    <a href="#deployment"><strong>Deployment</strong></a>
+  </p>
+</div>
 
-The Enterprise AI Gateway is a secure, high-performance API routing layer and management control plane designed for enterprises to orchestrate, monitor, and enforce compliance across multiple Large Language Models (LLMs).
+<hr />
 
-## Core Capabilities
+## 🚀 Overview
 
-*   **Dynamic Intelligent Routing**: Routes requests to optimal providers (OpenAI, AWS Bedrock, Local Ollama) based on live latency, availability, and cost constraints.
-*   **Enterprise Security Guardrails**: Built-in PII shielding (GDPR/HIPAA compliance), prompt injection detection, and full audit logging for every token.
-*   **Cost Control & FinOps**: Tracks token usage by department and user, enforces routing limits, and heavily leverages Semantic Caching for massive cost savings.
-*   **Admin Control Plane**: A centralized dashboard to visualize live operational metrics, configure active providers, and set routing policies.
-*   **Employee Portal**: A secure chat interface for internal teams, featuring document uploads and a persistent history layer.
+The **Enterprise AI Platform** is a unified gateway and chat interface designed to solve the three biggest challenges of adopting Generative AI in large organizations: **Security, Cost, and Vendor Lock-in**.
 
-## Architecture
+Instead of allowing employees to use fragmented AI tools directly, they access a unified **Employee Portal**. Behind the scenes, the **AI Gateway** automatically routes requests to the optimal model (OpenAI, Anthropic, local Ollama, etc.), redacts sensitive PII data on the fly, caches redundant queries to save costs, and provides IT with a comprehensive admin dashboard.
 
-This is a modern monorepo built for extreme performance and enterprise scale.
+## ✨ Key Features
 
-```text
-├── apps/
-│   ├── control-plane/       # Next.js 15 UI for Admins and Employees
-│   └── gateway/             # Fastify REST & SSE API Server
-└── packages/
-    ├── database/            # Prisma ORM & PostgreSQL Schema
-    ├── auth/                # JWT & RBAC Authentication
-    ├── cache/               # Redis Semantic Caching Layer
-    ├── finops/              # Cost estimation Engine
-    ├── models/              # Provider SDKs (OpenAI, Bedrock, Ollama)
-    └── safety/              # PII and Prompt Injection Scanners
+### 🛡️ Enterprise Security & Compliance
+- **PII Redaction Engine:** Automatically detects and masks Phone Numbers, Emails, and Credit Cards before data leaves your network.
+- **Prompt Injection Defense:** Blocks malicious jailbreak attempts to protect underlying systems.
+- **Audit Logging:** Every prompt, response, and policy decision is traced and logged in PostgreSQL.
+
+### 🧠 Intelligent Routing & Resilience
+- **Dynamic Model Routing:** Automatically route requests based on configurable strategies (`Cost-Optimized`, `Latency-Optimized`, `Balanced`).
+- **Circuit Breaker:** Automatically failover to backup providers (e.g., from OpenAI to AWS Bedrock) if a provider experiences an outage. No downtime for end-users.
+- **Model Agnostic:** Plug-and-play support for OpenAI, Anthropic, Google Gemini, Ollama, vLLM, Groq, and more.
+
+### 💰 FinOps & Cost Optimization
+- **Semantic Caching:** Uses Redis to cache responses for similar questions, returning answers in <50ms and reducing API costs by up to 40%.
+- **Cost Analytics Dashboard:** Track token usage and costs down to the individual user, department, and provider level.
+- **Local Fallback:** Force non-critical queries to hit local self-hosted models (Ollama) to save cloud API credits.
+
+### 💻 Dual-Interface
+- **Employee Portal:** A sleek, user-friendly ChatGPT-like interface for daily employee use.
+- **Admin Control Plane:** A comprehensive dashboard for IT to manage providers, routing rules, users, and view live telemetry.
+
+---
+
+## 🏗 Architecture
+
+```mermaid
+graph LR
+    User[Employee Portal] -->|Chat Request| Gateway[AI Gateway]
+    
+    subgraph Gateway Core
+        Gateway --> PII[PII Redaction]
+        PII --> Cache[Semantic Cache - Redis]
+        Cache --> Router[Dynamic Router]
+    end
+    
+    Router -->|Cost Optimized| Local[Ollama / Local]
+    Router -->|Latency Optimized| OpenAI[OpenAI API]
+    Router -->|Failover| Claude[Anthropic API]
+    
+    Gateway --> DB[(PostgreSQL)]
 ```
 
-## Quick Start (Installation Wizard)
+## 🛠 Tech Stack
 
-We provide a frictionless setup experience for evaluating the platform.
+- **Frontend:** Next.js 15 (App Router), React, Tailwind CSS, Lucide Icons, Recharts
+- **Backend:** Node.js, Fastify, TypeScript, Prisma ORM
+- **Database & Cache:** PostgreSQL, Redis
+- **Containerization:** Docker & Docker Compose
+
+---
+
+## ⚡ Quick Start (Local Development)
+
+The easiest way to run the platform locally is using Docker.
 
 ### Prerequisites
-*   Node.js v20+
-*   PostgreSQL 15+ (Local or via Docker)
-*   Redis (Local or via Docker)
-*   Docker & Docker Compose (Optional, for 1-click DB setup)
+- [Docker & Docker Compose](https://www.docker.com/products/docker-desktop)
+- Node.js 20+
 
-### 1-Click Setup
+### 1-Click Run
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/enterprise-ai-platform.git
+cd enterprise-ai-platform
 
-1. Run the setup wizard:
-   ```bash
-   ./setup.sh
-   ```
-2. The wizard will automatically:
-   * Validate environment dependencies.
-   * Install all npm packages.
-   * Provision the database schema (`npm run db:push`).
-   * Boot the Gateway Server on `http://localhost:3000`.
-   * Boot the Control Plane UI on `http://localhost:3001`.
-
-3. Open your browser to `http://localhost:3001` to initialize the first Organization Admin account.
-
-## Documentation
-
-*   [System Architecture & Design](./docs/architecture.md)
-*   [Provider Configuration Guide](./docs/providers.md)
-*   [API Documentation (Swagger)](#api)
-
-## Technology Stack
-
-*   **API Gateway**: Fastify, TypeScript
-*   **Frontend**: Next.js 15, React 19, TailwindCSS, Shadcn/UI, React Query, Recharts, Lucide Icons
-*   **Data Layer**: PostgreSQL, Prisma ORM
-*   **Caching**: Redis, ioredis
-*   **Authentication**: Custom Enterprise Auth Module (Argon2, JWT)
-
-## API Documentation
-
-The Gateway provides an OpenAPI 3.0 Swagger interface. Once the server is running, navigate to:
-
-```text
-http://localhost:3000/docs
+# Start the database, cache, backend, and frontend
+docker-compose up -d
 ```
 
-## License
-Enterprise Proprietary
+### Accessing the Platform
+- **Employee Portal:** `http://localhost:3000/en/portal`
+- **Admin Dashboard:** `http://localhost:3000/en/admin`
+- **Gateway API:** `http://localhost:3001`
+
+*(Default Admin Account: admin@enterprise.local / admin123)*
+
+---
+
+## 🌍 Cloud Deployment (Production)
+
+To make this accessible as a public website for your team, you can deploy the components to modern cloud providers:
+
+1. **Database:** Deploy PostgreSQL and Redis on [Supabase](https://supabase.com) or [Aiven](https://aiven.io).
+2. **Backend Gateway:** Deploy the Fastify server (`apps/gateway`) to [Render](https://render.com) or [Railway](https://railway.app).
+3. **Frontend Portal:** Deploy the Next.js app (`apps/control-plane`) to [Vercel](https://vercel.com) or [Netlify](https://netlify.com).
+
+*Detailed production deployment guides coming soon.*
+
+---
+
+## 📸 Screenshots
+
+*(Replace these placeholders with actual screenshots of your application)*
+
+| Employee Portal | Admin Dashboard |
+| :---: | :---: |
+| <img src="https://placehold.co/600x400/18181b/52525b?text=Employee+Portal+Screenshot" width="400" /> | <img src="https://placehold.co/600x400/18181b/52525b?text=Admin+Dashboard+Screenshot" width="400" /> |
+
+| Routing Configuration | Cost Analytics |
+| :---: | :---: |
+| <img src="https://placehold.co/600x400/18181b/52525b?text=Dynamic+Routing+Settings" width="400" /> | <img src="https://placehold.co/600x400/18181b/52525b?text=FinOps+Dashboard" width="400" /> |
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

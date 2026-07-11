@@ -630,6 +630,11 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string };
     const updates = request.body as any;
     
+    const existing = await prisma.policy.findFirst({
+      where: { id, organizationId: orgId }
+    });
+    if (!existing) return reply.status(404).send({ error: 'Policy not found' });
+    
     const policy = await prisma.policy.update({
       where: { id },
       data: updates
@@ -640,6 +645,11 @@ export default async function adminRoutes(fastify: FastifyInstance) {
   fastify.delete('/v1/admin/policies/:id', async (request, reply) => {
     const orgId = (request as any).user.organizationId;
     const { id } = request.params as { id: string };
+    
+    const existing = await prisma.policy.findFirst({
+      where: { id, organizationId: orgId }
+    });
+    if (!existing) return reply.status(404).send({ error: 'Policy not found' });
     
     await prisma.policy.delete({ where: { id } });
     return { success: true };
@@ -721,26 +731,36 @@ export default async function adminRoutes(fastify: FastifyInstance) {
   // --------------------------------------------------------
 
   fastify.get('/v1/admin/prompt-templates', async (request, reply) => {
+    const orgId = (request as any).user.organizationId;
     const templates = await prisma.promptTemplate.findMany({
+      where: { organizationId: orgId },
       orderBy: { createdAt: 'desc' }
     });
     return templates;
   });
 
   fastify.post('/v1/admin/prompt-templates', async (request, reply) => {
+    const orgId = (request as any).user.organizationId;
     const { name, description, content, isGlobal } = request.body as any;
     if (!name || !content) {
       return reply.status(400).send({ error: 'Name and content are required' });
     }
     const template = await prisma.promptTemplate.create({
-      data: { name, description, content, isGlobal: isGlobal || false }
+      data: { organizationId: orgId, name, description, content, isGlobal: isGlobal || false }
     });
     return template;
   });
 
   fastify.patch('/v1/admin/prompt-templates/:id', async (request, reply) => {
+    const orgId = (request as any).user.organizationId;
     const { id } = request.params as { id: string };
     const { name, description, content, isGlobal } = request.body as any;
+    
+    const existing = await prisma.promptTemplate.findFirst({
+      where: { id, organizationId: orgId }
+    });
+    if (!existing) return reply.status(404).send({ error: 'Prompt template not found' });
+    
     const template = await prisma.promptTemplate.update({
       where: { id },
       data: { name, description, content, isGlobal }
@@ -749,7 +769,14 @@ export default async function adminRoutes(fastify: FastifyInstance) {
   });
 
   fastify.delete('/v1/admin/prompt-templates/:id', async (request, reply) => {
+    const orgId = (request as any).user.organizationId;
     const { id } = request.params as { id: string };
+    
+    const existing = await prisma.promptTemplate.findFirst({
+      where: { id, organizationId: orgId }
+    });
+    if (!existing) return reply.status(404).send({ error: 'Prompt template not found' });
+
     await prisma.promptTemplate.delete({
       where: { id }
     });

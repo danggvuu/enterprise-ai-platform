@@ -6,25 +6,30 @@ import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { MessageSquare, Plus, Folder, Star, Clock, User, LogOut, Code, ChevronLeft, ChevronRight, Settings, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ProfileModal } from '@/components/profile/ProfileModal';
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const t = useTranslations('Portal');
   const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [workspace, setWorkspace] = useState('General');
   const [user, setUser] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
+  const [folders, setFolders] = useState<any[]>([]);
 
   useEffect(() => {
     const init = async () => {
       try {
-        const [me, convos] = await Promise.all([
+        const [me, convos, flds] = await Promise.all([
           api.getMe(),
-          api.getConversations()
+          api.getConversations(),
+          api.getFolders()
         ]);
         setUser(me);
         setConversations(convos);
+        setFolders(flds);
       } catch (err) {
         console.error('Failed to load portal data', err);
         // If unauthenticated, api.ts automatically redirects to login
@@ -107,6 +112,50 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             </select>
           </div>
 
+          {/* Folders List */}
+          <div className="flex flex-col gap-2">
+            {!collapsed && (
+              <div className="flex items-center justify-between text-zinc-500">
+                <span className="text-[10px] font-bold uppercase tracking-wider">{t('folders') || 'Folders'}</span>
+                <button 
+                  onClick={async () => {
+                    const name = prompt('Folder name:');
+                    if (name) {
+                      const f = await api.createFolder(name);
+                      setFolders(prev => [f, ...prev]);
+                    }
+                  }}
+                  className="hover:text-zinc-300 p-1 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            {folders.length === 0 && !collapsed && (
+              <div className="text-xs text-zinc-600 p-2 italic">No folders</div>
+            )}
+            {folders.map(folder => (
+              <div key={folder.id} className="flex items-center gap-2 p-2 hover:bg-zinc-900/60 rounded-lg text-xs text-zinc-400 cursor-pointer transition-colors group">
+                <Folder className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                {!collapsed && <span className="truncate">{folder.name}</span>}
+                {!collapsed && (
+                  <button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('Delete folder?')) {
+                        await api.deleteFolder(folder.id);
+                        setFolders(prev => prev.filter(f => f.id !== folder.id));
+                      }
+                    }}
+                    className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 cursor-pointer transition-opacity shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
           {/* History */}
           <div className="flex flex-col gap-2">
             {!collapsed && (
@@ -143,7 +192,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         {/* Footer User Panel */}
         <div className="p-4 border-t border-zinc-900 flex flex-col gap-2 bg-zinc-900/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 shrink-0">
+            <div 
+              onClick={() => setIsProfileOpen(true)}
+              className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 shrink-0 cursor-pointer hover:bg-zinc-700 transition-colors"
+            >
               <User className="w-4 h-4 text-zinc-300" />
             </div>
             {!collapsed && user && (
@@ -180,6 +232,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <main className="flex-1 flex flex-col overflow-hidden bg-zinc-950 relative z-10">
         {children}
       </main>
+
+      <ProfileModal 
+        user={user} 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+        onUpdate={setUser} 
+      />
     </div>
   );
 }

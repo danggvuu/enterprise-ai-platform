@@ -11,7 +11,7 @@ export default function Home() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [healthStatus, setHealthStatus] = useState<any>(null);
   
-  // Wizard steps: 0 = health check, 1 = wizard error fix, 2 = register / login
+  // Wizard steps: 0 = health check, 1 = wizard error fix, 2 = register / login, 3 = forgot password
   const [step, setStep] = useState(0);
 
   const [email, setEmail] = useState('');
@@ -106,6 +106,21 @@ export default function Home() {
     }
   };
 
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.forgotPassword(email);
+      setForgotSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Request failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (checking) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-500">
@@ -133,6 +148,8 @@ export default function Home() {
               ? 'Verifying infrastructure dependencies before proceeding.'
               : needsSetup 
               ? 'Welcome to the Enterprise AI Gateway. Create the first Organization Admin account.'
+              : step === 3
+              ? 'Enter your email address to receive a password reset link.'
               : 'Sign in to access your Enterprise AI workspaces and control plane.'}
           </p>
         </div>
@@ -206,6 +223,64 @@ export default function Home() {
                {healthStatus?.database === 'connected' && healthStatus?.redis === 'connected' ? 'Continue Anyway (Mode B)' : 'Retry Connection'}
              </button>
           </div>
+        ) : step === 3 ? (
+          <form 
+            onSubmit={handleForgotPassword} 
+            className="w-full flex flex-col gap-4 bg-zinc-900/50 border border-zinc-850 p-6 rounded-2xl backdrop-blur-sm"
+          >
+            {forgotSuccess ? (
+              <div className="flex flex-col items-center gap-4 py-4 text-center">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+                <div>
+                  <h3 className="text-lg font-medium text-zinc-100">Check your email</h3>
+                  <p className="text-sm text-zinc-400 mt-2">If an account exists with {email}, we have sent a password reset link.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(2);
+                    setForgotSuccess(false);
+                  }}
+                  className="mt-4 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Return to login
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1 text-left">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Email Address</label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="admin@enterprise.com"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 mt-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Send Reset Link</span>}
+                </button>
+                <div className="text-center mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="text-xs text-zinc-400 hover:text-zinc-300 transition-colors"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
         ) : (
           <form 
             onSubmit={needsSetup ? handleSetup : handleLogin} 
@@ -267,7 +342,18 @@ export default function Home() {
             </div>
 
             <div className="space-y-1 text-left">
-              <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Password</label>
+                {!needsSetup && (
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input

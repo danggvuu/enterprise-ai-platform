@@ -2,15 +2,20 @@
 
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import { ChatMessage } from '@/lib/types';
 import { Send, Upload, Sparkles, Shield, Clock, Coins, Info, Copy, Check, RefreshCw, FileText, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 function PortalChatContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const t = useTranslations('Portal');
+  const locale = useLocale();
   const conversationId = searchParams.get('c');
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -230,6 +235,22 @@ function PortalChatContent() {
               <option value="latency-optimized">Latency Optimized</option>
             </select>
           </div>
+
+          <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1 ml-2">
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase">Lang</span>
+            <select
+              value={locale}
+              onChange={(e) => {
+                const newLang = e.target.value;
+                const pathname = window.location.pathname.replace(/^\/(en|vi)/, `/${newLang}`);
+                window.location.href = `${pathname}${window.location.search}`;
+              }}
+              className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer"
+            >
+              <option value="en">English</option>
+              <option value="vi">Tiếng Việt</option>
+            </select>
+          </div>
         </div>
       </header>
 
@@ -247,7 +268,37 @@ function PortalChatContent() {
                     : 'bg-zinc-900/60 border-zinc-850 text-zinc-100'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+                {msg.role === 'user' ? (
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                ) : (
+                  <div className="prose prose-invert max-w-none prose-sm overflow-hidden">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({node, inline, className, children, ...props}: any) {
+                          const match = /language-(\w+)/.exec(className || '')
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              {...props}
+                              style={vscDarkPlus}
+                              language={match[1]}
+                              PreTag="div"
+                              className="rounded-md my-2"
+                            >
+                              {String(children).replace(/\n$/, '')}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code {...props} className="bg-zinc-800/80 px-1 py-0.5 rounded text-blue-300">
+                              {children}
+                            </code>
+                          )
+                        }
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
 
                 {msg.role === 'assistant' && msg.id !== 'welcome' && (
                   <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-zinc-800/80 text-[10px] text-zinc-500">
