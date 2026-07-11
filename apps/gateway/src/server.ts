@@ -115,7 +115,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   await server.register(cors, {
-    origin: '*',
+    origin: true,
     credentials: true,
   });
 
