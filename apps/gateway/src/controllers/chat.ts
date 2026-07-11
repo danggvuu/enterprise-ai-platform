@@ -227,9 +227,9 @@ export default async function chatRoutes(fastify: FastifyInstance) {
       const providerType = isFallback ? (decision.providerId === 'ollama' ? 'OLLAMA' : 'OPENAI') : (dbProvider?.providerType || 'OPENAI');
 
       const adapter = ModelFactory.createAdapter(providerType, {
-        apiKey: decryptedKey || process.env.OPENAI_API_KEY, // Fallback to env for local dev if missing
+        apiKey: decryptedKey || process.env.OPENAI_API_KEY,
         region: process.env.AWS_REGION || 'us-east-1',
-        baseUrl: dbProvider?.baseUrl || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
+        baseUrl: dbProvider?.baseUrl || (providerType === 'OLLAMA' ? (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434') : undefined),
       });
       
       const startTime = Date.now();
@@ -417,7 +417,7 @@ export default async function chatRoutes(fastify: FastifyInstance) {
     const adapter = ModelFactory.createAdapter(providerType, {
       apiKey: decryptedKey || process.env.OPENAI_API_KEY,
       region: process.env.AWS_REGION || 'us-east-1',
-      baseUrl: dbProvider?.baseUrl || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
+      baseUrl: dbProvider?.baseUrl || (providerType === 'OLLAMA' ? (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434') : undefined),
     });
     
     reply.raw.setHeader('Content-Type', 'text/event-stream');
