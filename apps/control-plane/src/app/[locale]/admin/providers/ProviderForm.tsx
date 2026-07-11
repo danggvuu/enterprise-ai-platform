@@ -204,7 +204,15 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
               <div className="max-h-48 overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-lg p-2 space-y-1">
                 {models.map((m, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-zinc-900 p-2 rounded">
-                    <span className="text-sm text-zinc-200 font-mono">{m.modelId}</span>
+                    <input 
+                      className="text-sm text-zinc-200 font-mono bg-transparent border-none outline-none flex-1 focus:bg-zinc-800 px-2 py-1 rounded"
+                      value={m.modelId}
+                      onChange={(e) => {
+                        const newModels = [...models];
+                        newModels[idx].modelId = e.target.value;
+                        setModels(newModels);
+                      }}
+                    />
                     <button 
                       onClick={() => setModels(models.filter((_, i) => i !== idx))}
                       className="text-zinc-600 hover:text-red-500"

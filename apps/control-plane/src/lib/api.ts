@@ -30,8 +30,10 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...options, headers });
 
   if (response.status === 401 && typeof window !== 'undefined') {
-    localStorage.removeItem('token');
-    window.location.href = '/en'; // Redirect to login
+    if (!path.includes('/auth/login')) {
+      localStorage.removeItem('token');
+      window.location.href = '/en'; // Redirect to login
+    }
   }
 
   if (!response.ok) {
