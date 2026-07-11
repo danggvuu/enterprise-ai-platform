@@ -120,11 +120,15 @@ To make this accessible as a public website for your team, you can deploy the co
 
 | Employee Portal | Admin Dashboard |
 | :---: | :---: |
-| <img src="https://placehold.co/600x400/18181b/52525b?text=Employee+Portal+Screenshot" width="400" /> | <img src="https://placehold.co/600x400/18181b/52525b?text=Admin+Dashboard+Screenshot" width="400" /> |
+| <img width="1394" height="787" alt="Employee Portal" src="https://github.com/user-attachments/assets/9c2b1c91-f235-48af-9e9c-5012b20efd1f" />
+ | <img width="1394" height="787" alt="Admin Dashboard" src="https://github.com/user-attachments/assets/dc93e64d-8f90-4f55-8341-d7f3507a9cfe" />
+|
 
 | Routing Configuration | Cost Analytics |
 | :---: | :---: |
-| <img src="https://placehold.co/600x400/18181b/52525b?text=Dynamic+Routing+Settings" width="400" /> | <img src="https://placehold.co/600x400/18181b/52525b?text=FinOps+Dashboard" width="400" /> |
+| <img width="1394" height="787" alt="Routing Configuration" src="https://github.com/user-attachments/assets/c764b4fb-0ad5-4e52-88dc-7c52e2ee411b" />
+ | <img width="1394" height="787" alt="Cost Analytics" src="https://github.com/user-attachments/assets/117f53e3-ad0d-4fbf-b797-597b27caf0f8" />
+ |
 
 ---
 
