@@ -423,6 +423,10 @@ export default async function chatRoutes(fastify: FastifyInstance) {
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
+    if (request.headers.origin) {
+      reply.raw.setHeader('Access-Control-Allow-Origin', request.headers.origin as string);
+      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
 
     reply.raw.write(`data: ${JSON.stringify({ conversationId })}\n\n`);
 
