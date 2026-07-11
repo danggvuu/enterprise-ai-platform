@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Server, Key, Globe, Search, Play, Trash2 } from 'lucide-react';
@@ -17,8 +18,14 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
   const [models, setModels] = useState<any[]>([]);
   
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleTest = async () => {
+
     setTesting(true);
     try {
       await api.testProvider({
@@ -73,8 +80,8 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
           <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
@@ -225,4 +232,7 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
       </div>
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(modalContent, document.body);
 }
