@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise AI Platform — Pipeline Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e4e4ef;
+      --text-dim: #8888a0;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Hero */
+    .hero {
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent2), var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      max-width: 700px;
+      position: relative;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent2);
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    /* TOC */
+    .toc {
+      max-width: 900px;
+      margin: 0 auto 4rem;
+      padding: 0 2rem;
+    }
+    .toc h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: var(--accent2);
+    }
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .toc-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .toc-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99,102,241,0.1);
+    }
+    .toc-num {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      min-width: 36px;
+    }
+    .toc-label { font-weight: 600; font-size: 0.9rem; }
+    .toc-desc { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* Main Content */
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 2rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--accent);
+      min-width: 48px;
+    }
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 2rem 0 0.75rem;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h3::before {
+      content: '▸';
+      color: var(--accent);
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-dim);
+    }
+
+    /* Info boxes */
+    .box {
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+    }
+    .box-info { background: rgba(59,130,246,0.08); border-color: var(--blue); }
+    .box-warn { background: rgba(245,158,11,0.08); border-color: var(--amber); }
+    .box-danger { background: rgba(239,68,68,0.08); border-color: var(--red); }
+    .box-success { background: rgba(16,185,129,0.08); border-color: var(--green); }
+    .box-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .box-info .box-title { color: var(--blue); }
+    .box-warn .box-title { color: var(--amber); }
+    .box-danger .box-title { color: var(--red); }
+    .box-success .box-title { color: var(--green); }
+    .box p { margin-bottom: 0.5rem; }
+
+    /* Code */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface2);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      color: var(--pink);
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0 1.5rem;
+      position: relative;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+      font-size: 0.8rem;
+      line-height: 1.8;
+    }
+    .code-label {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 1.5rem 0;
+    }
+    .flow-step {
+      padding: 10px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-arrow {
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    /* File tree */
+    .file-tree {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 2;
+      color: var(--text-dim);
+    }
+    .file-tree .dir { color: var(--blue); font-weight: 600; }
+    .file-tree .file { color: var(--text-dim); }
+    .file-tree .hot { color: var(--pink); font-weight: 600; }
+    .file-tree .comment { color: #555; font-style: italic; }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--surface);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+    }
+    td { color: var(--text-dim); }
+
+    /* Pipe diagram */
+    .pipeline {
+      position: relative;
+      padding-left: 40px;
+      margin: 2rem 0;
+    }
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, var(--accent), var(--purple), var(--pink), var(--green));
+      border-radius: 2px;
+    }
+    .pipe-step {
+      position: relative;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .pipe-step::before {
+      content: '';
+      position: absolute;
+      left: -32px;
+      top: 1.5rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg);
+    }
+    .pipe-step .step-num {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+    .pipe-step .step-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .pipe-step p {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .tag-green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .tag-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .tag-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .tag-purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+    ul, ol {
+      margin: 0.5rem 0 1rem 1.5rem;
+      color: var(--text-dim);
+    }
+    li { margin-bottom: 0.4rem; }
+
+    strong { color: var(--text); }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 640px) {
+      .toc-grid { grid-template-columns: 1fr; }
+      .flow { flex-direction: column; align-items: flex-start; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<div class="hero">
+  <span class="badge">📖 TÀI LIỆU NỘI BỘ — v1.0</span>
+  <h1>Enterprise AI Platform<br>Pipeline Guide</h1>
+  <p class="subtitle">
+    Hướng dẫn cực kỳ chi tiết toàn bộ hệ thống từ A→Z.<br>
+    Đọc xong sẽ hiểu mọi thứ bên trong, tự tay fix bug, tự tay thêm tính năng.
+  </p>
+</div>
+
+<!-- ===================== TOC ===================== -->
+<nav class="toc">
+  <h2>📑 Mục lục</h2>
+  <div class="toc-grid">
+    <a href="#s1" class="toc-card"><span class="toc-num">01</span><div><div class="toc-label">Tổng quan hệ thống</div><div class="toc-desc">Kiến trúc & cấu trúc thư mục</div></div></a>
+    <a href="#s2" class="toc-card"><span class="toc-num">02</span><div><div class="toc-label">Hạ tầng nền tảng</div><div class="toc-desc">Docker, PostgreSQL, Redis</div></div></a>
+    <a href="#s3" class="toc-card"><span class="toc-num">03</span><div><div class="toc-label">Xác thực & Bảo mật</div><div class="toc-desc">JWT, Session, Mã hóa API Key</div></div></a>
+    <a href="#s4" class="toc-card"><span class="toc-num">04</span><div><div class="toc-label">Pipeline Chat chi tiết</div><div class="toc-desc">Từ khi bấm Send đến nhận kết quả</div></div></a>
+    <a href="#s5" class="toc-card"><span class="toc-num">05</span><div><div class="toc-label">Hệ thống định tuyến AI</div><div class="toc-desc">Score Engine, Circuit Breaker, Failover</div></div></a>
+    <a href="#s6" class="toc-card"><span class="toc-num">06</span><div><div class="toc-label">Adapter — Kết nối AI</div><div class="toc-desc">OpenAI, Ollama, Gemini, Bedrock</div></div></a>
+    <a href="#s7" class="toc-card"><span class="toc-num">07</span><div><div class="toc-label">An toàn & Kiểm duyệt</div><div class="toc-desc">PII, Prompt Injection, Policy</div></div></a>
+    <a href="#s8" class="toc-card"><span class="toc-num">08</span><div><div class="toc-label">Cache thông minh</div><div class="toc-desc">Redis Semantic Cache</div></div></a>
+    <a href="#s9" class="toc-card"><span class="toc-num">09</span><div><div class="toc-label">Quản lý chi phí</div><div class="toc-desc">FinOps & Cost Tracking</div></div></a>
+    <a href="#s10" class="toc-card"><span class="toc-num">10</span><div><div class="toc-label">Giao diện người dùng</div><div class="toc-desc">Control Plane & Portal</div></div></a>
+    <a href="#s11" class="toc-card"><span class="toc-num">11</span><div><div class="toc-label">Database Schema</div><div class="toc-desc">Toàn bộ bảng dữ liệu</div></div></a>
+    <a href="#s12" class="toc-card"><span class="toc-num">12</span><div><div class="toc-label">Hướng dẫn triển khai</div><div class="toc-desc">Cài đặt, chạy, cập nhật</div></div></a>
+    <a href="#s13" class="toc-card"><span class="toc-num">13</span><div><div class="toc-label">Xử lý lỗi thường gặp</div><div class="toc-desc">Debug guide & FAQ</div></div></a>
+    <a href="#s14" class="toc-card"><span class="toc-num">14</span><div><div class="toc-label">Thêm tính năng mới</div><div class="toc-desc">Hướng dẫn tự cập nhật</div></div></a>
+  </div>
+</nav>
+
+<!-- ===================== CONTENT ===================== -->
+<div class="content">
+
+<!-- ========== SECTION 1 ========== -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Tổng quan hệ thống</span>
+  </div>
+
+  <p>Hệ thống <strong>Enterprise AI Platform</strong> là một <strong>API Gateway thông minh</strong> đứng giữa người dùng và các nhà cung cấp AI (OpenAI, Google Gemini, Ollama, v.v.). Thay vì gọi trực tiếp đến từng nhà cung cấp, mọi yêu cầu đều đi qua hệ thống này để được <strong>kiểm duyệt, tối ưu, định tuyến, và ghi nhật ký</strong>.</p>
+
+  <div class="box box-info">
+    <div class="box-title">💡 Ví dụ dễ hiểu</div>
+    <p>Hãy tưởng tượng hệ thống này giống như một <strong>tổng đài viên thông minh</strong>. Khi nhân viên muốn hỏi AI, thay vì gọi thẳng cho AI, họ gọi cho tổng đài. Tổng đài sẽ: (1) kiểm tra danh tính, (2) lọc thông tin nhạy cảm, (3) chọn AI nào phù hợp nhất, (4) chuyển cuộc gọi, (5) ghi lại chi phí.</p>
+  </div>
+
+  <h3>Kiến trúc tổng thể</h3>
+  <div class="flow">
+    <span class="flow-step">🧑 Người dùng (Trình duyệt)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">🖥️ Control Plane (Next.js :3000)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">⚡ API Gateway (Fastify :8080)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">🤖 Nhà cung cấp AI</span>
+  </div>
+
+  <h3>Cấu trúc thư mục dự án</h3>
+  <div class="file-tree">
+    <span class="dir">📁 API_gateway/</span> <span class="comment">← Thư mục gốc của dự án</span><br>
+    ├── <span class="dir">📁 apps/</span> <span class="comment">← 2 ứng dụng chính</span><br>
+    │   ├── <span class="dir">📁 gateway/</span> <span class="comment">← Backend API (Fastify, chạy cổng 8080)</span><br>
+    │   │   └── <span class="dir">📁 src/</span><br>
+    │   │       ├── <span class="hot">server.ts</span> <span class="comment">← Điểm khởi động chính của backend</span><br>
+    │   │       ├── <span class="dir">📁 controllers/</span> <span class="comment">← Các route xử lý request</span><br>
+    │   │       │   ├── <span class="hot">chat.ts</span> <span class="comment">← ⭐ QUAN TRỌNG NHẤT: Xử lý chat + stream</span><br>
+    │   │       │   ├── <span class="file">auth.ts</span> <span class="comment">← Đăng nhập, đăng ký, đổi mật khẩu</span><br>
+    │   │       │   ├── <span class="file">admin.ts</span> <span class="comment">← API cho trang quản trị</span><br>
+    │   │       │   ├── <span class="file">portal.ts</span> <span class="comment">← API cho cổng nhân viên</span><br>
+    │   │       │   ├── <span class="file">files.ts</span> <span class="comment">← Upload/download file</span><br>
+    │   │       │   └── <span class="file">provider-management.ts</span> <span class="comment">← Quản lý nhà cung cấp AI</span><br>
+    │   │       └── <span class="dir">📁 services/</span><br>
+    │   │           └── <span class="file">registry.ts</span> <span class="comment">← Xây dựng bảng năng lực nhà cung cấp</span><br>
+    │   └── <span class="dir">📁 control-plane/</span> <span class="comment">← Frontend (Next.js, chạy cổng 3000)</span><br>
+    │       └── <span class="dir">📁 src/</span><br>
+    │           ├── <span class="dir">📁 app/[locale]/</span> <span class="comment">← Các trang (hỗ trợ đa ngôn ngữ)</span><br>
+    │           │   ├── <span class="dir">📁 admin/</span> <span class="comment">← Trang quản trị (Dashboard, Provider,...)</span><br>
+    │           │   └── <span class="dir">📁 portal/</span> <span class="comment">← Trang chat cho nhân viên</span><br>
+    │           ├── <span class="dir">📁 lib/</span><br>
+    │           │   └── <span class="hot">api.ts</span> <span class="comment">← Toàn bộ hàm gọi API từ frontend</span><br>
+    │           └── <span class="dir">📁 components/</span> <span class="comment">← Các thành phần giao diện tái sử dụng</span><br>
+    ├── <span class="dir">📁 packages/</span> <span class="comment">← Các module nội bộ (chia nhỏ để tái sử dụng)</span><br>
+    │   ├── <span class="dir">📁 auth/</span> <span class="comment">← Xác thực JWT + Argon2</span><br>
+    │   ├── <span class="dir">📁 models/</span> <span class="comment">← Adapter AI + Routing Engine</span><br>
+    │   ├── <span class="dir">📁 safety/</span> <span class="comment">← Lọc PII + Chống Prompt Injection</span><br>
+    │   ├── <span class="dir">📁 cache/</span> <span class="comment">← Semantic Cache (Redis)</span><br>
+    │   ├── <span class="dir">📁 finops/</span> <span class="comment">← Tính chi phí sử dụng AI</span><br>
+    │   ├── <span class="dir">📁 database/</span> <span class="comment">← Prisma ORM + Schema</span><br>
+    │   ├── <span class="dir">📁 logger/</span> <span class="comment">← Ghi log có cấu trúc</span><br>
+    │   ├── <span class="dir">📁 errors/</span> <span class="comment">← Các class lỗi tùy chỉnh</span><br>
+    │   └── <span class="dir">📁 storage/</span> <span class="comment">← Lưu trữ file (Local/S3)</span><br>
+    ├── <span class="hot">docker-compose.yml</span> <span class="comment">← Khởi động PostgreSQL + Redis</span><br>
+    └── <span class="file">package.json</span> <span class="comment">← Cấu hình gốc monorepo (pnpm)</span>
+  </div>
+</div>
+
+<!-- ========== SECTION 2 ========== -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Hạ tầng nền tảng</span>
+  </div>
+
+  <p>Hệ thống cần 2 "dịch vụ nền" chạy ngầm, được quản lý bởi Docker:</p>
+
+  <table>
+    <tr><th>Dịch vụ</th><th>Công nghệ</th><th>Cổng</th><th>Vai trò</th></tr>
+    <tr><td><strong>Database</strong></td><td>PostgreSQL 15</td><td>5432</td><td>Lưu trữ tất cả dữ liệu: người dùng, hội thoại, log, cấu hình nhà cung cấp</td></tr>
+    <tr><td><strong>Cache</strong></td><td>Redis 7</td><td>6379</td><td>Bộ nhớ đệm cực nhanh: cache câu trả lời AI, giới hạn tốc độ (rate limit)</td></tr>
+  </table>
+
+  <div class="box box-success">
+    <div class="box-title">📂 File: docker-compose.yml</div>
+    <p>Chỉ cần chạy <code>docker compose up -d</code> là cả 2 dịch vụ tự khởi động. Dữ liệu được lưu vĩnh viễn nhờ <strong>volumes</strong> (postgres_data, redis_data), nên tắt Docker không mất data.</p>
+  </div>
+
+  <pre><code><span class="code-label">docker-compose.yml</span>
+services:
+  postgres:                          # Cơ sở dữ liệu chính
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres        # Tài khoản đăng nhập DB
+      POSTGRES_PASSWORD: password    # Mật khẩu DB
+      POSTGRES_DB: enterprise_ai     # Tên database
+    ports:
+      - "5432:5432"                  # Cổng truy cập từ bên ngoài
+
+  redis:                             # Bộ nhớ đệm tốc độ cao
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"</code></pre>
+</div>
+
+<!-- ========== SECTION 3 ========== -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Xác thực & Bảo mật</span>
+  </div>
+
+  <p>Mọi request gửi đến Gateway đều phải qua 3 lớp bảo mật:</p>
+
+  <h3>Lớp 1: JWT Token (Thẻ ra vào)</h3>
+  <p>Khi người dùng <strong>đăng nhập</strong> thành công, hệ thống tạo ra một chuỗi mã hóa gọi là <strong>JWT Token</strong>. Token này giống như "thẻ ra vào tòa nhà" — mỗi lần gửi yêu cầu, người dùng phải đính kèm token này.</p>
+
+  <pre><code><span class="code-label">packages/auth/src/index.ts</span>
+// Khi nhận được request, hệ thống:
+1. Lấy token từ header "Authorization: Bearer &lt;token&gt;"
+2. Giải mã token bằng khóa bí mật (JWT_SECRET)
+3. Kiểm tra session trong database (chưa hết hạn? chưa bị thu hồi?)
+4. Gắn thông tin user vào request để các bước sau dùng:
+   → request.user = { id, role, organizationId }</code></pre>
+
+  <h3>Lớp 2: Mã hóa API Key nhà cung cấp (AES-256-GCM)</h3>
+  <p>Khi Admin nhập API Key của OpenAI/Gemini vào hệ thống, key đó <strong>KHÔNG lưu trực tiếp</strong> vào database. Thay vào đó, nó được <strong>mã hóa</strong> bằng thuật toán AES-256-GCM (chuẩn quân sự) rồi mới lưu.</p>
+
+  <pre><code><span class="code-label">packages/models/src/security/encryption.ts</span>
+// Mã hóa: "sk-abc123..." → "a1b2c3:d4e5f6:789xyz..."
+//          (API Key gốc)     (dạng mã hóa: iv:authTag:encrypted)
+
+encrypt("sk-abc123...")  // Khi Admin lưu API Key
+decrypt("a1b2c3:...")    // Khi Gateway cần gọi AI, giải mã ra key gốc</code></pre>
+
+  <h3>Lớp 3: Mật khẩu người dùng (Argon2)</h3>
+  <p>Mật khẩu người dùng được băm bằng <strong>Argon2</strong> (thuật toán thắng cuộc thi PHC 2015). Ngay cả khi hacker lấy được database, cũng không thể khôi phục mật khẩu gốc.</p>
+</div>
+
+<!-- ========== SECTION 4 ========== -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Pipeline Chat chi tiết</span>
+  </div>
+
+  <div class="box box-warn">
+    <div class="box-title">⚡ Đây là phần quan trọng nhất!</div>
+    <p>Hiểu được luồng này = hiểu 80% toàn bộ hệ thống. File chủ chốt: <code>apps/gateway/src/controllers/chat.ts</code></p>
+  </div>
+
+  <p>Khi người dùng <strong>bấm nút Send</strong> trên giao diện chat, đây là TOÀN BỘ những gì xảy ra bên trong:</p>
+
+  <div class="pipeline">
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 1 — Frontend gửi request</div>
+      <div class="step-title">Người dùng bấm Send → Frontend gọi API</div>
+      <p><strong>File:</strong> <code>apps/control-plane/src/lib/api.ts</code> → hàm <code>chatCompletionStream()</code></p>
+      <p>Frontend lấy toàn bộ lịch sử hội thoại + tin nhắn mới, đóng gói thành JSON và gửi đến Gateway qua endpoint <code>POST /v1/chat/stream</code>. Kèm theo JWT Token trong header.</p>
+      <pre><code>// Dữ liệu gửi đi:
+{
+  "model": "gemini-2.0-flash",       // Model AI muốn dùng
+  "messages": [                       // Lịch sử chat
+    { "role": "user", "content": "Xin chào!" }
+  ],
+  "conversationId": "abc123"          // ID cuộc hội thoại (nếu có)
+}</code></pre>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 2 — Xác thực danh tính</div>
+      <div class="step-title">Gateway kiểm tra JWT Token</div>
+      <p><strong>File:</strong> <code>packages/auth/src/index.ts</code> → hook <code>preValidation</code></p>
+      <p>Gateway nhận request, kiểm tra JWT Token. Nếu token hợp lệ → lấy ra <code>userId</code> và <code>organizationId</code>. Nếu không → trả về lỗi 401 Unauthorized.</p>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 3 — Quét an toàn (Safety Scan)</div>
+      <div class="step-title">Kiểm tra PII + Prompt Injection</div>
+      <p><strong>File:</strong> <code>packages/safety/src/index.ts</code> → class <code>SafetyScanner</code></p>
+      <p>Hệ thống quét tin nhắn của người dùng qua 2 bộ lọc:</p>
+      <ul>
+        <li><strong>Lọc PII</strong>: Tìm và che dấu số điện thoại VN (09x, 03x...), số CCCD (12 chữ số), email → thay bằng <code>[PHONE_REDACTED]</code>, <code>[EMAIL_REDACTED]</code></li>
+        <li><strong>Chống Prompt Injection</strong>: Phát hiện các câu lệnh nguy hiểm như "ignore all previous instructions", "you are now"... Nếu phát hiện → <strong>CHẶN</strong> ngay, không cho gửi đến AI.</li>
+      </ul>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 4 — Kiểm tra chính sách (Policy Engine)</div>
+      <div class="step-title">Áp dụng quy tắc của tổ chức</div>
+      <p><strong>File:</strong> <code>chat.ts</code> dòng 114-137</p>
+      <p>Hệ thống tải tất cả Policy (quy tắc) đã được Admin thiết lập cho tổ chức, rồi kiểm tra từng quy tắc:</p>
+      <ul>
+        <li>Ví dụ: "Nếu tin nhắn chứa PII → bắt buộc dùng model local (Ollama)" → chuyển strategy sang <code>cost-optimized</code></li>
+        <li>Ví dụ: "Nếu tin nhắn chứa PII → từ chối yêu cầu" → ném lỗi ngay</li>
+      </ul>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 5 — Kiểm tra Cache</div>
+      <div class="step-title">Tìm câu trả lời đã lưu sẵn</div>
+      <p><strong>File:</strong> <code>packages/cache/src/index.ts</code> → class <code>SemanticCache</code></p>
+      <p>Trước khi gọi AI (tốn tiền + chậm), hệ thống tạo <strong>SHA-256 hash</strong> từ (model + messages) rồi tra trong Redis. Nếu <strong>trùng khớp</strong> → trả ngay kết quả cũ (tốc độ ~5ms, chi phí $0). Nếu không → tiếp tục bước 6.</p>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 6 — Định tuyến thông minh (Dynamic Router)</div>
+      <div class="step-title">Chọn nhà cung cấp AI tốt nhất</div>
+      <p><strong>File:</strong> <code>packages/models/src/routing/DynamicRouter.ts</code></p>
+      <p>Đây là "bộ não" của hệ thống. Nó chấm điểm tất cả nhà cung cấp AI đã đăng ký dựa trên 7 tiêu chí, rồi chọn nhà cung cấp có điểm cao nhất. <em>(Chi tiết ở Mục 05)</em></p>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 7 — Tạo Adapter & Gọi AI</div>
+      <div class="step-title">Kết nối và gửi yêu cầu đến AI</div>
+      <p><strong>File:</strong> <code>packages/models/src/index.ts</code> → class <code>ModelFactory</code></p>
+      <p>Dựa trên nhà cung cấp được chọn, hệ thống tạo đúng loại Adapter (OpenAI, Ollama, Bedrock...) và gọi hàm <code>chat()</code> hoặc <code>stream()</code>. API Key được giải mã từ database ngay lúc này.</p>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 8 — Stream kết quả về Frontend</div>
+      <div class="step-title">Trả từng chữ về cho người dùng (SSE)</div>
+      <p><strong>File:</strong> <code>chat.ts</code> dòng 423-445</p>
+      <p>Gateway dùng <strong>Server-Sent Events (SSE)</strong> để gửi từng mảnh kết quả (chunk) về frontend theo thời gian thực. Giống ChatGPT — bạn thấy AI "gõ" từng chữ. Khi xong, gửi <code>data: [DONE]</code>.</p>
+      <pre><code>// Dữ liệu stream:
+data: {"conversationId":"abc123"}     ← Chunk 1: ID hội thoại
+data: {"text":"Xin"}                  ← Chunk 2: Từ đầu tiên
+data: {"text":" chào"}                ← Chunk 3: Từ thứ hai
+data: {"text":" bạn!"}               ← Chunk 4
+data: [DONE]                          ← Kết thúc stream</code></pre>
+    </div>
+
+    <div class="pipe-step">
+      <div class="step-num">Bước 9 — Lưu trữ & Ghi log</div>
+      <div class="step-title">Ghi nhật ký, tính tiền, lưu cache</div>
+      <p>Sau khi stream xong, Gateway thực hiện song song:</p>
+      <ul>
+        <li><strong>Lưu tin nhắn</strong> vào bảng <code>Message</code> (PostgreSQL)</li>
+        <li><strong>Ghi log</strong> vào bảng <code>LogTrace</code> (traceId, latency, cost, security flags)</li>
+        <li><strong>Lưu cache</strong> kết quả vào Redis (để lần sau trả nhanh)</li>
+        <li><strong>Tính chi phí</strong> qua <code>CostTracker</code></li>
+        <li><strong>Phát SSE</strong> cho dashboard admin (cập nhật real-time)</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== SECTION 5 ========== -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Hệ thống định tuyến AI (Routing)</span>
+  </div>
+
+  <p>Đây là hệ thống "chọn lựa thông minh" — quyết định mỗi request sẽ được gửi đến nhà cung cấp AI nào.</p>
+
+  <h3>4 chiến lược định tuyến (Routing Strategy)</h3>
+  <table>
+    <tr><th>Chiến lược</th><th>Ưu tiên</th><th>Khi nào dùng</th></tr>
+    <tr><td><span class="tag tag-blue">balanced</span></td><td>Cân bằng mọi yếu tố</td><td>Mặc định, phù hợp đa số trường hợp</td></tr>
+    <tr><td><span class="tag tag-green">cost-optimized</span></td><td>Tiết kiệm chi phí tối đa</td><td>Khi ngân sách hạn hẹp, ưu tiên Ollama (miễn phí)</td></tr>
+    <tr><td><span class="tag tag-amber">latency-optimized</span></td><td>Tốc độ phản hồi nhanh nhất</td><td>Chatbot realtime, cần phản hồi tức thì</td></tr>
+    <tr><td><span class="tag tag-purple">high-availability</span></td><td>Độ ổn định cao nhất</td><td>Hệ thống quan trọng, không được lỗi</td></tr>
+  </table>
+
+  <h3>7 tiêu chí chấm điểm nhà cung cấp</h3>
+  <p><strong>File:</strong> <code>packages/models/src/routing/ProviderScoreEngine.ts</code></p>
+  <ol>
+    <li><strong>Health (Sức khỏe)</strong>: Tỷ lệ lỗi gần đây. Lỗi nhiều = điểm thấp</li>
+    <li><strong>Availability (Khả dụng)</strong>: Tỷ lệ hoạt động. Hay offline = điểm thấp</li>
+    <li><strong>Latency (Độ trễ)</strong>: Thời gian phản hồi trung bình. Chậm = điểm thấp</li>
+    <li><strong>Cost (Chi phí)</strong>: Giá tiền mỗi 1000 token. Đắt = điểm thấp</li>
+    <li><strong>Capability (Năng lực)</strong>: Hỗ trợ streaming? Vision? Tool calling?</li>
+    <li><strong>Compliance (Tuân thủ)</strong>: Có đáp ứng yêu cầu pháp lý không?</li>
+    <li><strong>Context Window</strong>: Cửa sổ ngữ cảnh có đủ lớn không?</li>
+  </ol>
+
+  <pre><code><span class="code-label">Công thức tính điểm</span>
+Điểm tổng = (Health × w₁) + (Availability × w₂) + (Latency × w₃) 
+          + (Cost × w₄) + (Capability × w₅) + (Compliance × w₆)
+          + (ContextWindow × w₇) + (Priority × w₈)
+
+// Trong đó w₁...w₈ là trọng số, thay đổi theo chiến lược.
+// Ví dụ: cost-optimized → w₄ (Cost) = 3.0 (gấp 3 lần bình thường)</code></pre>
+
+  <h3>Circuit Breaker (Cầu dao tự ngắt)</h3>
+  <p><strong>File:</strong> <code>packages/models/src/routing/CircuitBreaker.ts</code></p>
+  <p>Giống như cầu dao điện trong nhà. Khi một nhà cung cấp AI lỗi liên tục (ví dụ: OpenAI sập), Circuit Breaker sẽ tự động "ngắt mạch" — không gửi thêm request đến nhà cung cấp đó nữa mà chuyển sang nhà cung cấp khác.</p>
+
+  <div class="flow">
+    <span class="flow-step" style="border-color: var(--green);">🟢 CLOSED (Bình thường)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="border-color: var(--red);">🔴 OPEN (Ngắt mạch)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="border-color: var(--amber);">🟡 HALF-OPEN (Thử lại)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="border-color: var(--green);">🟢 CLOSED</span>
+  </div>
+
+  <h3>Failover (Tự chuyển đổi dự phòng)</h3>
+  <p>Nếu nhà cung cấp AI #1 lỗi, hệ thống tự động thử nhà cung cấp AI #2, rồi #3 (tối đa 3 lần). Người dùng không biết đằng sau đang "chạy đua" như vậy.</p>
+</div>
+
+<!-- ========== SECTION 6 ========== -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">Adapter — Kết nối với các AI</span>
+  </div>
+
+  <p>Mỗi nhà cung cấp AI có API riêng. Adapter là "bộ phiên dịch" giúp Gateway nói chuyện được với tất cả.</p>
+
+  <table>
+    <tr><th>Adapter</th><th>File</th><th>Hỗ trợ nhà cung cấp</th></tr>
+    <tr>
+      <td><strong>OpenAIAdapter</strong></td>
+      <td><code>adapters/openai.ts</code></td>
+      <td>OpenAI, Gemini, Anthropic, OpenRouter, Groq, Together, Fireworks, Mistral, DeepSeek, LM Studio, vLLM, LocalAI, Azure OpenAI</td>
+    </tr>
+    <tr>
+      <td><strong>OllamaAdapter</strong></td>
+      <td><code>adapters/ollama.ts</code></td>
+      <td>Ollama (chạy model AI trên máy local)</td>
+    </tr>
+    <tr>
+      <td><strong>BedrockAdapter</strong></td>
+      <td><code>adapters/bedrock.ts</code></td>
+      <td>AWS Bedrock (Claude trên AWS)</td>
+    </tr>
+  </table>
+
+  <div class="box box-info">
+    <div class="box-title">💡 Tại sao Gemini dùng OpenAIAdapter?</div>
+    <p>Google cung cấp một endpoint <strong>tương thích OpenAI</strong> tại <code>https://generativelanguage.googleapis.com/v1beta/openai</code>. Nhờ đó, hệ thống chỉ cần dùng thư viện OpenAI SDK nhưng trỏ đến URL của Google → giao tiếp bình thường.</p>
+  </div>
+
+  <h3>ModelFactory — Nhà máy tạo Adapter</h3>
+  <p><strong>File:</strong> <code>packages/models/src/index.ts</code></p>
+  <p>Khi cần gọi AI, hệ thống gọi <code>ModelFactory.createAdapter(providerType, config)</code>. Hàm này nhìn vào <code>providerType</code> (ví dụ: "GOOGLE_GEMINI") rồi tạo đúng loại Adapter với đúng URL.</p>
+
+  <pre><code><span class="code-label">Bảng ánh xạ Provider → URL mặc định</span>
+OPENAI        → https://api.openai.com/v1
+GOOGLE_GEMINI → https://generativelanguage.googleapis.com/v1beta/openai
+ANTHROPIC     → https://api.anthropic.com/v1
+GROQ          → https://api.groq.com/openai/v1
+OLLAMA        → http://127.0.0.1:11434
+DEEPSEEK      → https://api.deepseek.com/v1
+OPENROUTER    → https://openrouter.ai/api/v1</code></pre>
+
+  <div class="box box-danger">
+    <div class="box-title">🐛 Bug đã sửa (quan trọng phải biết)</div>
+    <p>Trước đây, dòng code tạo adapter có bug: <code>baseUrl: dbProvider?.baseUrl || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434'</code>. Khi Provider không có baseUrl trong DB, nó fallback về Ollama URL cho MỌI provider (kể cả Gemini) → lỗi 404. Đã sửa thành chỉ fallback về Ollama URL khi providerType là 'OLLAMA'.</p>
+  </div>
+</div>
+
+<!-- ========== SECTION 7 ========== -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">An toàn & Kiểm duyệt</span>
+  </div>
+
+  <p><strong>File:</strong> <code>packages/safety/src/index.ts</code></p>
+
+  <h3>Lọc PII (Thông tin cá nhân)</h3>
+  <p>Trước khi gửi tin nhắn cho AI, hệ thống tự động tìm và che dấu thông tin nhạy cảm:</p>
+  <table>
+    <tr><th>Loại</th><th>Regex</th><th>Ví dụ</th><th>Kết quả</th></tr>
+    <tr><td>📱 SĐT Việt Nam</td><td><code>/(0[3|5|7|8|9])+([0-9]{8})/</code></td><td>0912345678</td><td>[PHONE_REDACTED]</td></tr>
+    <tr><td>🪪 Số CCCD</td><td><code>/([0-9]{12})/</code></td><td>079200123456</td><td>[CCCD_REDACTED]</td></tr>
+    <tr><td>📧 Email</td><td><code>/[a-z0-9._%+-]+@.../</code></td><td>test@gmail.com</td><td>[EMAIL_REDACTED]</td></tr>
+  </table>
+
+  <h3>Chống Prompt Injection</h3>
+  <p>Phát hiện các mẫu tấn công phổ biến. Nếu phát hiện → ném lỗi <code>SecurityViolationError</code>, request bị chặn hoàn toàn:</p>
+  <pre><code><span class="code-label">Các mẫu bị chặn</span>
+• "ignore all previous instructions"
+• "ignore previous instructions"
+• "disregard previous instructions"
+• "you are now"
+• "system prompt:"
+• "forget everything"
+• "bypass safety"</code></pre>
+</div>
+
+<!-- ========== SECTION 8 ========== -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-title">Cache thông minh (Semantic Cache)</span>
+  </div>
+
+  <p><strong>File:</strong> <code>packages/cache/src/index.ts</code></p>
+
+  <p>Khi 2 người dùng hỏi <strong>cùng một câu hỏi</strong> với <strong>cùng một model</strong>, hệ thống không cần gọi AI lần thứ 2. Thay vào đó, nó trả lại kết quả đã lưu trong Redis → <strong>tiết kiệm 100% chi phí, phản hồi chỉ 5ms</strong>.</p>
+
+  <div class="flow">
+    <span class="flow-step">📝 Request vào</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">🔑 SHA-256(model + messages)</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">🔍 Tra Redis</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">✅ Trúng? Trả ngay! | ❌ Trượt? Gọi AI</span>
+  </div>
+
+  <ul>
+    <li><strong>TTL (Time To Live)</strong>: 3600 giây = 1 giờ. Sau 1 giờ, cache tự xóa để đảm bảo kết quả mới.</li>
+    <li><strong>Timeout</strong>: Redis GET/SET bị giới hạn 3 giây. Nếu Redis chậm → bỏ qua cache, gọi AI trực tiếp.</li>
+  </ul>
+</div>
+
+<!-- ========== SECTION 9 ========== -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <span class="section-title">Quản lý chi phí (FinOps)</span>
+  </div>
+
+  <p><strong>File:</strong> <code>packages/finops/src/index.ts</code></p>
+
+  <p>Sau mỗi lần gọi AI, hệ thống tính chi phí dựa trên bảng giá cài sẵn:</p>
+
+  <table>
+    <tr><th>Model</th><th>Giá Prompt ($/1K token)</th><th>Giá Completion ($/1K token)</th></tr>
+    <tr><td>openai:gpt-4</td><td>$0.03</td><td>$0.06</td></tr>
+    <tr><td>openai:gpt-3.5-turbo</td><td>$0.0015</td><td>$0.002</td></tr>
+    <tr><td>ollama:llama3</td><td>$0 (miễn phí)</td><td>$0 (miễn phí)</td></tr>
+  </table>
+
+  <div class="box box-info">
+    <div class="box-title">💡 Token là gì?</div>
+    <p>Token là đơn vị đo lường văn bản mà AI xử lý. 1 token ≈ 4 ký tự tiếng Anh, hoặc ≈ 1-2 ký tự tiếng Việt. Ví dụ: "Xin chào bạn" ≈ 5-8 token.</p>
+  </div>
+</div>
+
+<!-- ========== SECTION 10 ========== -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-title">Giao diện người dùng (Frontend)</span>
+  </div>
+
+  <p><strong>Thư mục:</strong> <code>apps/control-plane/</code> — chạy bằng <strong>Next.js 15</strong> trên cổng <strong>3000</strong>.</p>
+
+  <h3>Hai khu vực chính</h3>
+  <table>
+    <tr><th>Khu vực</th><th>Đường dẫn</th><th>Dành cho</th><th>Tính năng</th></tr>
+    <tr><td><strong>🛡️ Admin Panel</strong></td><td><code>/admin/*</code></td><td>Quản trị viên</td><td>Dashboard, Nhà cung cấp, Chính sách, Chi phí, Log, Playground</td></tr>
+    <tr><td><strong>💬 Portal</strong></td><td><code>/portal</code></td><td>Nhân viên</td><td>Giao diện chat AI giống ChatGPT</td></tr>
+  </table>
+
+  <h3>Đa ngôn ngữ (i18n)</h3>
+  <p>Hệ thống hỗ trợ 2 ngôn ngữ: Tiếng Việt (<code>/vi/</code>) và Tiếng Anh (<code>/en/</code>). URL tự động có tiền tố locale. File dịch nằm trong <code>src/messages/</code>.</p>
+
+  <h3>File api.ts — "Cầu nối" Frontend ↔ Backend</h3>
+  <p><strong>File:</strong> <code>apps/control-plane/src/lib/api.ts</code></p>
+  <p>Tất cả hàm gọi API đều nằm trong object <code>api</code>. Ví dụ:</p>
+  <pre><code><span class="code-label">Các hàm quan trọng trong api.ts</span>
+api.chatCompletionStream(messages, model, strategy)  // Gọi chat stream (Portal)
+api.chatCompletion(messages, model, strategy)         // Gọi chat thường (Playground)
+api.getProviders()                                     // Lấy danh sách nhà cung cấp
+api.addProvider(data)                                  // Thêm nhà cung cấp mới
+api.getDashboardStats()                                // Lấy thống kê dashboard
+api.getUsers() / api.addUser(data)                     // Quản lý người dùng
+api.getLogs()                                          // Lấy nhật ký hoạt động</code></pre>
+</div>
+
+<!-- ========== SECTION 11 ========== -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <span class="section-title">Database Schema (Cấu trúc dữ liệu)</span>
+  </div>
+
+  <p><strong>File:</strong> <code>packages/database/prisma/schema.prisma</code></p>
+
+  <h3>Nhóm 1: Quản lý người dùng (IAM)</h3>
+  <table>
+    <tr><th>Bảng</th><th>Vai trò</th><th>Cột quan trọng</th></tr>
+    <tr><td><code>Organization</code></td><td>Tổ chức/công ty</td><td>name, slug, routingStrategy</td></tr>
+    <tr><td><code>Department</code></td><td>Phòng ban</td><td>name, organizationId</td></tr>
+    <tr><td><code>User</code></td><td>Người dùng</td><td>email, passwordHash, role (SUPER_ADMIN/ADMIN/MANAGER/EMPLOYEE)</td></tr>
+    <tr><td><code>Session</code></td><td>Phiên đăng nhập</td><td>token, expiresAt, ipAddress</td></tr>
+    <tr><td><code>ApiKey</code></td><td>API Key cho hệ thống ngoài</td><td>keyHash, keyPrefix, isActive</td></tr>
+  </table>
+
+  <h3>Nhóm 2: Chat & Hội thoại</h3>
+  <table>
+    <tr><th>Bảng</th><th>Vai trò</th><th>Cột quan trọng</th></tr>
+    <tr><td><code>Conversation</code></td><td>Cuộc hội thoại</td><td>title, userId, isPinned, systemPrompt</td></tr>
+    <tr><td><code>Message</code></td><td>Tin nhắn</td><td>role (USER/ASSISTANT), content, latencyMs, costUsd, isCacheHit</td></tr>
+    <tr><td><code>Folder</code></td><td>Thư mục nhóm hội thoại</td><td>name, userId</td></tr>
+    <tr><td><code>FileAsset</code></td><td>File đính kèm</td><td>filename, mimeType, storageKey</td></tr>
+  </table>
+
+  <h3>Nhóm 3: Cấu hình AI & Nhật ký</h3>
+  <table>
+    <tr><th>Bảng</th><th>Vai trò</th><th>Cột quan trọng</th></tr>
+    <tr><td><code>ProviderConfig</code></td><td>Nhà cung cấp AI</td><td>providerType, encryptedApiKey, baseUrl, priority</td></tr>
+    <tr><td><code>AIModel</code></td><td>Model AI</td><td>modelId (gpt-4o, gemini-2.0-flash...), contextWindow, pricing</td></tr>
+    <tr><td><code>Policy</code></td><td>Chính sách điều hướng</td><td>conditionLogic (JSON), actionLogic (JSON)</td></tr>
+    <tr><td><code>LogTrace</code></td><td>Nhật ký mỗi request</td><td>prompt, latencyMs, costUsd, piiDetected, injectionDetected, status</td></tr>
+    <tr><td><code>Budget</code></td><td>Ngân sách</td><td>monthlyLimitUsd, alertThresholdPercent, currentSpendUsd</td></tr>
+    <tr><td><code>AuditLog</code></td><td>Log hành vi admin</td><td>action, resource, metadata</td></tr>
+  </table>
+</div>
+
+<!-- ========== SECTION 12 ========== -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <span class="section-title">Hướng dẫn triển khai & Vận hành</span>
+  </div>
+
+  <h3>Yêu cầu hệ thống</h3>
+  <ul>
+    <li><strong>Node.js</strong> ≥ 20.0.0</li>
+    <li><strong>pnpm</strong> (quản lý package, version 9.1.0)</li>
+    <li><strong>Docker</strong> (cho PostgreSQL + Redis)</li>
+    <li>(Tùy chọn) <strong>Ollama</strong> nếu muốn chạy AI cục bộ</li>
+  </ul>
+
+  <h3>Các bước chạy dự án từ đầu</h3>
+  <pre><code><span class="code-label">Terminal</span>
+# 1. Khởi động hạ tầng (PostgreSQL + Redis)
+docker compose up -d
+
+# 2. Cài đặt dependencies
+pnpm install
+
+# 3. Chạy toàn bộ hệ thống (tự khởi tạo DB + chạy cả backend + frontend)
+npm run dev
+
+# Kết quả:
+# - Frontend: http://localhost:3000
+# - Backend:  http://localhost:8080
+# - API Docs: http://localhost:8080/docs</code></pre>
+
+  <h3>Biến môi trường quan trọng</h3>
+  <table>
+    <tr><th>Biến</th><th>Giá trị mặc định</th><th>Giải thích</th></tr>
+    <tr><td><code>DATABASE_URL</code></td><td>postgresql://postgres:password@localhost:5432/enterprise_ai</td><td>Chuỗi kết nối PostgreSQL</td></tr>
+    <tr><td><code>REDIS_URL</code></td><td>redis://localhost:6379</td><td>Chuỗi kết nối Redis</td></tr>
+    <tr><td><code>JWT_SECRET</code></td><td>supersecret</td><td>Khóa bí mật để ký JWT Token</td></tr>
+    <tr><td><code>ENCRYPTION_KEY</code></td><td>(auto-generated)</td><td>Khóa mã hóa AES-256 cho API Key</td></tr>
+    <tr><td><code>OLLAMA_BASE_URL</code></td><td>http://127.0.0.1:11434</td><td>Địa chỉ server Ollama</td></tr>
+    <tr><td><code>NEXT_PUBLIC_API_URL</code></td><td>http://localhost:8080</td><td>Địa chỉ Gateway cho frontend</td></tr>
+  </table>
+</div>
+
+<!-- ========== SECTION 13 ========== -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <span class="section-title">Xử lý lỗi thường gặp</span>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "Failed to fetch" / "TypeError: Failed to fetch"</div>
+    <p><strong>Nguyên nhân:</strong> Frontend không kết nối được đến Backend (Gateway chưa chạy, hoặc lỗi CORS)</p>
+    <p><strong>Cách sửa:</strong></p>
+    <ul>
+      <li>Kiểm tra Backend đã chạy chưa: <code>curl http://localhost:8080/health</code></li>
+      <li>Nếu chưa chạy: <code>npm run dev</code> lại</li>
+      <li>Nếu lỗi CORS: Kiểm tra <code>server.ts</code> → <code>origin: true</code> (không phải <code>'*'</code>)</li>
+    </ul>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "OpenAI Error: 404 page not found"</div>
+    <p><strong>Nguyên nhân:</strong> Gateway gửi request đến sai URL (ví dụ: gửi cho Ollama thay vì Gemini)</p>
+    <p><strong>Cách sửa:</strong> Mở file <code>chat.ts</code>, tìm dòng tạo adapter. Đảm bảo <code>baseUrl</code> chỉ fallback về Ollama khi <code>providerType === 'OLLAMA'</code>:</p>
+    <pre><code>baseUrl: dbProvider?.baseUrl || (providerType === 'OLLAMA' 
+  ? (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434') 
+  : undefined)  // undefined = ModelFactory tự dùng URL mặc định</code></pre>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "429 Too Many Requests"</div>
+    <p><strong>Nguyên nhân:</strong> Nhà cung cấp AI (Google, OpenAI...) giới hạn số request/phút</p>
+    <p><strong>Cách sửa:</strong> Chờ 1-2 phút rồi thử lại. Hoặc nâng cấp API Key lên bản trả phí. Hoặc dùng model có quota rộng hơn (gemini-2.0-flash).</p>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "Cannot read properties of undefined (reading 'toFixed')"</div>
+    <p><strong>Nguyên nhân:</strong> Dữ liệu từ API trả về thiếu trường (ví dụ: <code>costs.savings.ollama</code> = undefined)</p>
+    <p><strong>Cách sửa:</strong> Thêm optional chaining: <code>costs?.savings?.ollama?.toFixed(4) || '0.0000'</code></p>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "Database unavailable" / "Prisma fetch failed"</div>
+    <p><strong>Nguyên nhân:</strong> PostgreSQL chưa chạy hoặc bị crash</p>
+    <p><strong>Cách sửa:</strong> <code>docker compose up -d postgres</code> → Kiểm tra: <code>docker ps</code></p>
+  </div>
+
+  <div class="box box-danger">
+    <div class="box-title">❌ "No models available" trong Playground</div>
+    <p><strong>Nguyên nhân:</strong> Chưa thêm nhà cung cấp AI nào, hoặc API Key sai</p>
+    <p><strong>Cách sửa:</strong> Vào "Nhà cung cấp" → Thêm mới → Chọn loại (GOOGLE_GEMINI) → Dán API Key → Để trống Base URL → Lưu</p>
+  </div>
+</div>
+
+<!-- ========== SECTION 14 ========== -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <span class="section-title">Hướng dẫn tự cập nhật & Thêm tính năng</span>
+  </div>
+
+  <h3>Thêm nhà cung cấp AI mới</h3>
+  <p>Ví dụ: Thêm hỗ trợ cho <strong>Cohere</strong>:</p>
+  <pre><code><span class="code-label">Bước 1: packages/models/src/index.ts (ModelFactory)</span>
+// Thêm case mới vào switch:
+case 'COHERE':
+  if (!config?.apiKey) throw new ProviderError('COHERE API key is required');
+  return new OpenAIAdapter(config.apiKey, config.baseUrl || 'https://api.cohere.com/v1');
+
+<span class="code-label">Bước 2: packages/database/prisma/schema.prisma</span>
+// Thêm vào enum ProviderType:
+enum ProviderType {
+  ...
+  COHERE    // ← Thêm dòng này
+
+<span class="code-label">Bước 3: Chạy migration</span>
+cd packages/database && npx prisma db push
+
+<span class="code-label">Bước 4: Frontend (ProviderForm.tsx)</span>
+// Thêm option vào dropdown:
+&lt;option value="COHERE"&gt;Cohere&lt;/option&gt;</code></pre>
+
+  <h3>Thêm trang Admin mới</h3>
+  <pre><code><span class="code-label">Ví dụ: Thêm trang "Analytics"</span>
+1. Tạo file: apps/control-plane/src/app/[locale]/admin/analytics/page.tsx
+2. Thêm menu item vào Sidebar component
+3. Tạo API endpoint mới ở apps/gateway/src/controllers/admin.ts
+4. Thêm hàm gọi API vào apps/control-plane/src/lib/api.ts</code></pre>
+
+  <h3>Thêm bộ lọc an toàn mới</h3>
+  <pre><code><span class="code-label">packages/safety/src/index.ts</span>
+// Thêm regex mới vào đầu file:
+const BANK_ACCOUNT_REGEX = /\d{10,14}/g;  // Số tài khoản ngân hàng
+
+// Thêm vào hàm maskPii():
+clean = clean.replace(BANK_ACCOUNT_REGEX, '[BANK_REDACTED]');</code></pre>
+
+  <h3>Sửa xong → Push lên Github</h3>
+  <pre><code><span class="code-label">Terminal</span>
+git add .
+git commit -m "feat: mô tả ngắn thay đổi"
+git push origin main</code></pre>
+
+  <div class="box box-success">
+    <div class="box-title">✅ Lời khuyên quan trọng</div>
+    <p>Trước khi push, luôn chạy <code>npm run build</code> trong thư mục <code>apps/control-plane</code> để đảm bảo frontend không có lỗi compile. Nếu build thành công = an toàn để deploy.</p>
+  </div>
+</div>
+
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<div class="footer">
+  <p>Enterprise AI Platform — Pipeline Guide v1.0</p>
+  <p>Tạo bởi AI Assistant • Cập nhật lần cuối: Tháng 7, 2026</p>
+</div>
+
+</body>
+</html>
