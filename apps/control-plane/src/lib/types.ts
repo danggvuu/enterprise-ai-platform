@@ -55,6 +55,7 @@ export interface DashboardStats {
     circuitState: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
   }[];
   recentRequests: RequestLog[];
+  costPipeline?: { timestamp: string; cost: number }[];
 }
 
 export interface CostStats {
