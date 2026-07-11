@@ -15,7 +15,7 @@ out
 .turbo
 
 # logs
-logs
+/logs
 *.log
 
 # coverage
