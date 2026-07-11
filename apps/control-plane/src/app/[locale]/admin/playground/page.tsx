@@ -209,7 +209,9 @@ export default function PlaygroundPage() {
                 >
                   {providers.length === 0 && <option value="">No providers available</option>}
                   {providers.map(p => (
-                    <option key={p.id} value={p.id}>{p.id.toUpperCase()}</option>
+                    <option key={p.id} value={p.id}>
+                      {(p.name || p.id).toUpperCase()}
+                    </option>
                   ))}
                 </select>
 
@@ -222,7 +224,8 @@ export default function PlaygroundPage() {
                   {(!selectedProviderId || providers.find(p => p.id === selectedProviderId)?.supportedModels.length === 0) && <option value="">No models available</option>}
                   {providers.find(p => p.id === selectedProviderId)?.supportedModels.map(m => {
                     const provider = providers.find(p => p.id === selectedProviderId)!;
-                    const isProviderFree = provider.id.toLowerCase().includes('groq') || provider.id.toLowerCase().includes('ollama');
+                    const nameToCheck = (provider.name || provider.id).toLowerCase();
+                    const isProviderFree = nameToCheck.includes('groq') || nameToCheck.includes('ollama');
                     const isFree = isProviderFree || m.endsWith(':free');
                     return (
                       <option key={m} value={m}>

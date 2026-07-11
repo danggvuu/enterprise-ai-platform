@@ -20,6 +20,9 @@ export interface RequestLog {
 
 export interface ProviderInfo {
   id: string;
+  name?: string;
+  providerType?: string;
+  baseUrl?: string;
   status: 'active' | 'inactive';
   latency: number;
   availability: number;

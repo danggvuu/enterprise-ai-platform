@@ -302,7 +302,9 @@ function PortalChatContent() {
             >
               {providers.length === 0 && <option value="">None</option>}
               {providers.map(p => (
-                <option key={p.id} value={p.id}>{p.id.toUpperCase()}</option>
+                <option key={p.id} value={p.id}>
+                  {(p.name || p.id).toUpperCase()}
+                </option>
               ))}
             </select>
           </div>
@@ -322,7 +324,8 @@ function PortalChatContent() {
               )}
               {providers.find(p => p.id === selectedProviderId)?.supportedModels.map(m => {
                 const provider = providers.find(p => p.id === selectedProviderId)!;
-                const isProviderFree = provider.id.toLowerCase().includes('groq') || provider.id.toLowerCase().includes('ollama');
+                const nameToCheck = (provider.name || provider.id).toLowerCase();
+                const isProviderFree = nameToCheck.includes('groq') || nameToCheck.includes('ollama');
                 const isFree = isProviderFree || m.endsWith(':free');
                 return (
                   <option key={m} value={m}>
