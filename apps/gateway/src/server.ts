@@ -248,8 +248,9 @@ if (require.main === module) {
     try {
       await server.ready();
       server.swagger(); 
-      await server.listen({ port: 8080, host: '0.0.0.0' });
-      logger.info({ message: 'Enterprise AI Gateway started on port 8080' });
+      const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+      await server.listen({ port, host: '0.0.0.0' });
+      logger.info({ message: `Enterprise AI Gateway started on port ${port}` });
     } catch (err) {
       logger.error({ message: 'Error starting server', error: err as Error });
       process.exit(1);
