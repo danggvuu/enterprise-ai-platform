@@ -11,6 +11,7 @@ export default function PlaygroundPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful, professional AI assistant.');
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [strategy, setStrategy] = useState<string>('balanced');
   const [loading, setLoading] = useState(false);
@@ -30,8 +31,11 @@ export default function PlaygroundPage() {
       setProviders(data || []);
       
       // Auto-select a model if none selected
-      if (data && data.length > 0 && data[0].supportedModels.length > 0) {
-        setSelectedModel(data[0].supportedModels[0]);
+      if (data && data.length > 0) {
+        setSelectedProviderId(data[0].id);
+        if (data[0].supportedModels.length > 0) {
+          setSelectedModel(data[0].supportedModels[0]);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch providers', err);
@@ -189,26 +193,41 @@ export default function PlaygroundPage() {
             
             <div className="space-y-4">
               <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1">Target Provider</label>
+                <select
+                  value={selectedProviderId}
+                  onChange={e => {
+                    setSelectedProviderId(e.target.value);
+                    const provider = providers.find(p => p.id === e.target.value);
+                    if (provider && provider.supportedModels.length > 0) {
+                      setSelectedModel(provider.supportedModels[0]);
+                    } else {
+                      setSelectedModel('');
+                    }
+                  }}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 appearance-none mb-3"
+                >
+                  {providers.length === 0 && <option value="">No providers available</option>}
+                  {providers.map(p => (
+                    <option key={p.id} value={p.id}>{p.id.toUpperCase()}</option>
+                  ))}
+                </select>
+
                 <label className="block text-xs font-medium text-zinc-400 mb-1">Target Model</label>
                 <select
                   value={selectedModel}
                   onChange={e => setSelectedModel(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 appearance-none"
                 >
-                  {providers.length === 0 && <option value="">No providers available</option>}
-                  {providers.map(p => {
-                    const isProviderFree = p.id.toLowerCase().includes('groq') || p.id.toLowerCase().includes('ollama');
+                  {(!selectedProviderId || providers.find(p => p.id === selectedProviderId)?.supportedModels.length === 0) && <option value="">No models available</option>}
+                  {providers.find(p => p.id === selectedProviderId)?.supportedModels.map(m => {
+                    const provider = providers.find(p => p.id === selectedProviderId)!;
+                    const isProviderFree = provider.id.toLowerCase().includes('groq') || provider.id.toLowerCase().includes('ollama');
+                    const isFree = isProviderFree || m.endsWith(':free');
                     return (
-                      <optgroup key={p.id} label={p.id.toUpperCase()}>
-                        {p.supportedModels.map(m => {
-                          const isFree = isProviderFree || m.endsWith(':free');
-                          return (
-                            <option key={`${p.id}-${m}`} value={m}>
-                              {m} {isFree ? '(Free)' : '($)'}
-                            </option>
-                          );
-                        })}
-                      </optgroup>
+                      <option key={m} value={m}>
+                        {m} {isFree ? '(Free)' : '($)'}
+                      </option>
                     );
                   })}
                 </select>

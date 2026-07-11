@@ -25,6 +25,7 @@ function PortalChatContent() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState('');
   const [model, setModel] = useState('');
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [strategy, setStrategy] = useState('balanced');
@@ -46,9 +47,19 @@ function PortalChatContent() {
       try {
         const data = await api.getProviders();
         setProviders(data || []);
-        if (data && data.length > 0 && !currentModel) {
-          if (data[0].supportedModels.length > 0) {
-            setModel(data[0].supportedModels[0]);
+        if (data && data.length > 0) {
+          if (!currentModel) {
+            setSelectedProviderId(data[0].id);
+            if (data[0].supportedModels.length > 0) {
+              setModel(data[0].supportedModels[0]);
+            }
+          } else {
+            const owningProvider = data.find(p => p.supportedModels.includes(currentModel));
+            if (owningProvider) {
+              setSelectedProviderId(owningProvider.id);
+            } else {
+              setSelectedProviderId(data[0].id);
+            }
           }
         }
       } catch (e) {
@@ -81,11 +92,17 @@ function PortalChatContent() {
             }));
             setMessages(mappedMessages);
             
-            // Set model/strategy from last assistant message if available
             const lastAssistant = [...mappedMessages].reverse().find(m => m.role === 'assistant');
             if (lastAssistant?.executionDetails) {
-              setModel(lastAssistant.executionDetails.modelId);
+              const lastModel = lastAssistant.executionDetails.modelId;
+              setModel(lastModel);
               setStrategy(lastAssistant.executionDetails.strategy || 'balanced');
+              // Sync provider if we already loaded them
+              setProviders(prevProviders => {
+                const p = prevProviders.find(p => p.supportedModels.includes(lastModel));
+                if (p) setSelectedProviderId(p.id);
+                return prevProviders;
+              });
             }
           }
         } catch (err) {
@@ -265,38 +282,52 @@ function PortalChatContent() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1">
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase">Provider</span>
+            <select
+              value={selectedProviderId}
+              onChange={(e) => {
+                const newProvId = e.target.value;
+                setSelectedProviderId(newProvId);
+                const provider = providers.find(p => p.id === newProvId);
+                if (provider && provider.supportedModels.length > 0) {
+                  const newModel = provider.supportedModels[0];
+                  setModel(newModel);
+                  localStorage.setItem('defaultModel', newModel);
+                } else {
+                  setModel('');
+                  localStorage.setItem('defaultModel', '');
+                }
+              }}
+              className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer max-w-[120px] truncate"
+            >
+              {providers.length === 0 && <option value="">None</option>}
+              {providers.map(p => (
+                <option key={p.id} value={p.id}>{p.id.toUpperCase()}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1">
             <span className="text-[10px] text-zinc-500 font-semibold uppercase">{t('model')}</span>
-              <select
+            <select
               value={model}
               onChange={(e) => {
                 setModel(e.target.value);
                 localStorage.setItem('defaultModel', e.target.value);
               }}
-              className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer max-w-[150px] truncate"
             >
-              {providers.length === 0 && (
-                <>
-                  <option value="llama3.2">llama3.2 (Local Ollama)</option>
-                  <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama)</option>
-                  <option value="gpt-4o">gpt-4o (OpenAI Cloud)</option>
-                  <option value="gemini-1.5-pro">gemini-1.5-pro (Google Gemini)</option>
-                  <option value="gemini-1.5-flash">gemini-1.5-flash (Google Gemini)</option>
-                  <option value="anthropic.claude-3-sonnet">claude-3 (AWS Bedrock)</option>
-                </>
+              {(!selectedProviderId || providers.find(p => p.id === selectedProviderId)?.supportedModels.length === 0) && (
+                <option value="">None</option>
               )}
-              {providers.map(p => {
-                const isProviderFree = p.id.toLowerCase().includes('groq') || p.id.toLowerCase().includes('ollama');
+              {providers.find(p => p.id === selectedProviderId)?.supportedModels.map(m => {
+                const provider = providers.find(p => p.id === selectedProviderId)!;
+                const isProviderFree = provider.id.toLowerCase().includes('groq') || provider.id.toLowerCase().includes('ollama');
+                const isFree = isProviderFree || m.endsWith(':free');
                 return (
-                  <optgroup key={p.id} label={p.id.toUpperCase()}>
-                    {p.supportedModels.map(m => {
-                      const isFree = isProviderFree || m.endsWith(':free');
-                      return (
-                        <option key={`${p.id}-${m}`} value={m}>
-                          {m} {isFree ? '(Free)' : '($)'}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
+                  <option key={m} value={m}>
+                    {m} {isFree ? '(Free)' : '($)'}
+                  </option>
                 );
               })}
             </select>
