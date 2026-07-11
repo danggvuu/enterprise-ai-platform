@@ -184,7 +184,15 @@ export default function ProviderForm({ onSuccess, onCancel }: { onSuccess: () =>
           {step >= 3 && (
             <div className={`space-y-4`}>
               <div className="h-px w-full bg-zinc-800 my-4" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">3. Review Models ({models.length})</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">3. Review Models ({models.length})</h3>
+                <button
+                  onClick={() => setModels(models.filter(m => m.modelId.endsWith(':free')))}
+                  className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded hover:bg-emerald-500/20 transition-colors"
+                >
+                  Keep Only Free Models
+                </button>
+              </div>
               
               <div className="max-h-48 overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-lg p-2 space-y-1">
                 {models.map((m, idx) => (
