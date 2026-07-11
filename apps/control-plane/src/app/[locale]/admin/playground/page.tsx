@@ -195,10 +195,22 @@ export default function PlaygroundPage() {
                   onChange={e => setSelectedModel(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 appearance-none"
                 >
-                  {allModels.length === 0 && <option value="">No models available</option>}
-                  {allModels.map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
+                  {providers.length === 0 && <option value="">No providers available</option>}
+                  {providers.map(p => {
+                    const isProviderFree = p.id.toLowerCase().includes('groq') || p.id.toLowerCase().includes('ollama');
+                    return (
+                      <optgroup key={p.id} label={p.id.toUpperCase()}>
+                        {p.supportedModels.map(m => {
+                          const isFree = isProviderFree || m.endsWith(':free');
+                          return (
+                            <option key={`${p.id}-${m}`} value={m}>
+                              {m} {isFree ? '(Free)' : '($)'}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    );
+                  })}
                 </select>
               </div>
 

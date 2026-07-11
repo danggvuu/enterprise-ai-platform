@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
-import { ChatMessage } from '@/lib/types';
+import { ChatMessage, ProviderInfo } from '@/lib/types';
 import { Send, Upload, Sparkles, Shield, Clock, Coins, Info, Copy, Check, RefreshCw, FileText, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -25,17 +25,38 @@ function PortalChatContent() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [model, setModel] = useState('llama3.2');
+  const [model, setModel] = useState('');
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [strategy, setStrategy] = useState('balanced');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    let currentModel = '';
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('defaultModel');
-      if (stored) setModel(stored);
+      if (stored) {
+        currentModel = stored;
+        setModel(stored);
+      }
     }
+    
+    const loadProviders = async () => {
+      try {
+        const data = await api.getProviders();
+        setProviders(data || []);
+        if (data && data.length > 0 && !currentModel) {
+          if (data[0].supportedModels.length > 0) {
+            setModel(data[0].supportedModels[0]);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch providers', e);
+      }
+    };
+    loadProviders();
+
     const fetchConversation = async () => {
       setInitializing(true);
       if (conversationId) {
@@ -245,7 +266,7 @@ function PortalChatContent() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1">
             <span className="text-[10px] text-zinc-500 font-semibold uppercase">{t('model')}</span>
-            <select
+              <select
               value={model}
               onChange={(e) => {
                 setModel(e.target.value);
@@ -253,12 +274,31 @@ function PortalChatContent() {
               }}
               className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer"
             >
-              <option value="llama3.2">llama3.2 (Local Ollama)</option>
-              <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama)</option>
-              <option value="gpt-4o">gpt-4o (OpenAI Cloud)</option>
-              <option value="gemini-1.5-pro">gemini-1.5-pro (Google Gemini)</option>
-              <option value="gemini-1.5-flash">gemini-1.5-flash (Google Gemini)</option>
-              <option value="anthropic.claude-3-sonnet">claude-3 (AWS Bedrock)</option>
+              {providers.length === 0 && (
+                <>
+                  <option value="llama3.2">llama3.2 (Local Ollama)</option>
+                  <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama)</option>
+                  <option value="gpt-4o">gpt-4o (OpenAI Cloud)</option>
+                  <option value="gemini-1.5-pro">gemini-1.5-pro (Google Gemini)</option>
+                  <option value="gemini-1.5-flash">gemini-1.5-flash (Google Gemini)</option>
+                  <option value="anthropic.claude-3-sonnet">claude-3 (AWS Bedrock)</option>
+                </>
+              )}
+              {providers.map(p => {
+                const isProviderFree = p.id.toLowerCase().includes('groq') || p.id.toLowerCase().includes('ollama');
+                return (
+                  <optgroup key={p.id} label={p.id.toUpperCase()}>
+                    {p.supportedModels.map(m => {
+                      const isFree = isProviderFree || m.endsWith(':free');
+                      return (
+                        <option key={`${p.id}-${m}`} value={m}>
+                          {m} {isFree ? '(Free)' : '($)'}
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+                );
+              })}
             </select>
           </div>
 
