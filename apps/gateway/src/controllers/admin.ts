@@ -44,6 +44,34 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       _sum: { costUsd: true, tokensUsed: true }
     });
 
+    // Compute real cost pipeline for the last 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentCostLogs = await prisma.logTrace.findMany({
+      where: { organizationId: orgId, timestamp: { gte: twentyFourHoursAgo } },
+      select: { timestamp: true, costUsd: true }
+    });
+
+    const costPipeline = [];
+    for (let i = 23; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(d.getHours() - i);
+      d.setMinutes(0, 0, 0);
+      costPipeline.push({
+        timestamp: d.toISOString(),
+        cost: 0
+      });
+    }
+
+    for (const log of recentCostLogs) {
+      const logD = new Date(log.timestamp);
+      logD.setMinutes(0, 0, 0);
+      const logIso = logD.toISOString();
+      const bucket = costPipeline.find(b => b.timestamp === logIso);
+      if (bucket) {
+        bucket.cost += (log.costUsd || 0);
+      }
+    }
+
     const recentLogs = await prisma.logTrace.findMany({
       orderBy: { timestamp: 'desc' },
       take: 10
@@ -83,6 +111,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       totalConversations: totalConvos,
       providers: allProviders,
       recentRequests: mappedRecent,
+      costPipeline,
     };
   });
 

@@ -18,13 +18,11 @@ export default function DashboardPage() {
     refetchInterval: 5000, // auto-refresh every 5 seconds
   });
 
-  const costData = [
-    { name: '10:00', cost: 0.02 },
-    { name: '11:00', cost: 0.05 },
-    { name: '12:00', cost: 0.08 },
-    { name: '13:00', cost: 0.12 },
-    { name: '14:00', cost: 0.18 },
-  ];
+  const rawCostData = data?.costPipeline || [];
+  const costData = rawCostData.map((item: any) => ({
+    name: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    cost: item.cost
+  }));
 
   if (isLoading) {
     return (
