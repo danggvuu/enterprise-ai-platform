@@ -27,4 +27,5 @@ export interface ChatResponse {
 
 export interface ModelAdapter {
   chat(request: ChatRequest): Promise<ChatResponse>;
+  stream(request: ChatRequest): AsyncGenerator<string, void, unknown>;
 }

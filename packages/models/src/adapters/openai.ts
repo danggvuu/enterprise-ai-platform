@@ -39,4 +39,25 @@ export class OpenAIAdapter implements ModelAdapter {
       throw new ProviderError(`OpenAI Error: ${error.message}`);
     }
   }
+
+  async *stream(request: ChatRequest): AsyncGenerator<string, void, unknown> {
+    try {
+      const response = await this.client.chat.completions.create({
+        model: request.model,
+        messages: request.messages,
+        temperature: request.temperature,
+        max_tokens: request.max_tokens,
+        stream: true,
+      });
+
+      for await (const chunk of response) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          yield content;
+        }
+      }
+    } catch (error: any) {
+      throw new ProviderError(`OpenAI Stream Error: ${error.message}`);
+    }
+  }
 }
