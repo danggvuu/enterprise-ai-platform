@@ -31,12 +31,16 @@ export const authPlugin: FastifyPluginAsync<AuthOptions> = async (fastify, optio
   // Middleware to authenticate JWT and verify RBAC
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      let token = '';
       const authHeader = request.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new UnauthorizedError('Missing or invalid authorization header');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      } else if ((request.query as any)?.token) {
+        token = (request.query as any).token;
+      } else {
+        throw new UnauthorizedError('Missing or invalid authorization token');
       }
 
-      const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, options.jwtSecret) as any;
       
       // Load session from DB to ensure it hasn't been revoked

@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "generate": "prisma generate",
-    "migrate": "prisma migrate dev"
+    "migrate": "prisma migrate dev",
+    "push": "prisma db push",
+    "seed": "echo 'No seed script yet'"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0"

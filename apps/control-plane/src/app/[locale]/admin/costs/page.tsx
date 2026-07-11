@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Coins, PiggyBank, RefreshCw, BarChart } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, Tooltip, Area, BarChart as RechartsBarChart, Bar, Cell } from 'recharts';
 
 export default function CostsPage() {
+  const t = useTranslations('Admin');
   const { data: costs, isLoading, refetch } = useQuery({
     queryKey: ['costStats'],
     queryFn: () => api.getCosts(),
@@ -28,8 +30,8 @@ export default function CostsPage() {
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-zinc-100">Cost Analytics</h1>
-          <p className="text-zinc-500 text-xs mt-1">Track LLM expenses, token consumption, and financial optimizations.</p>
+          <h1 className="text-2xl font-extrabold text-zinc-100">{t('costs')}</h1>
+          <p className="text-zinc-500 text-xs mt-1">{t('costsDesc')}</p>
         </div>
         <button
           onClick={() => refetch()}

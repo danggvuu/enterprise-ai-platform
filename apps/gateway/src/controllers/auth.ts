@@ -114,4 +114,37 @@ export default async function authRoutes(fastify: FastifyInstance) {
     const userCount = await prisma.user.count();
     return { needsSetup: userCount === 0 };
   });
+
+  fastify.post('/v1/auth/logout', { preValidation: [(fastify as any).authenticate] }, async (request, reply) => {
+    const token = request.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      await prisma.session.deleteMany({ where: { token } });
+    }
+    return { success: true };
+  });
+
+  fastify.post('/v1/auth/forgot-password', async (request, reply) => {
+    // Simplified: Just returns success to prevent email enumeration
+    return { success: true, message: 'If the email exists, a reset link has been sent.' };
+  });
+
+  fastify.post('/v1/auth/reset-password', async (request, reply) => {
+    // Simplified MVP for reset
+    return reply.status(400).send({ error: 'Invalid or expired token' });
+  });
+
+  fastify.get('/v1/auth/google', async (request, reply) => {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return reply.redirect('http://localhost:3001/en?error=Provider_not_configured');
+    }
+    // Placeholder for actual fastify-oauth2 logic
+    return reply.status(501).send({ error: 'OAuth logic needs fastify registration' });
+  });
+
+  fastify.get('/v1/auth/microsoft', async (request, reply) => {
+    if (!process.env.MICROSOFT_CLIENT_ID) {
+      return reply.redirect('http://localhost:3001/en?error=Provider_not_configured');
+    }
+    return reply.status(501).send({ error: 'OAuth logic needs fastify registration' });
+  });
 }

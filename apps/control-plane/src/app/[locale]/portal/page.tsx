@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
 import { ChatMessage } from '@/lib/types';
 import { Send, Upload, Sparkles, Shield, Clock, Coins, Info, Copy, Check, RefreshCw, FileText, X } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Send, Upload, Sparkles, Shield, Clock, Coins, Info, Copy, Check, Refres
 function PortalChatContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useTranslations('Portal');
   const conversationId = searchParams.get('c');
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -23,6 +25,10 @@ function PortalChatContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('defaultModel');
+      if (stored) setModel(stored);
+    }
     const fetchConversation = async () => {
       setInitializing(true);
       if (conversationId) {
@@ -48,7 +54,7 @@ function PortalChatContent() {
             setMessages(mappedMessages);
             
             // Set model/strategy from last assistant message if available
-            const lastAssistant = mappedMessages.reverse().find(m => m.role === 'assistant');
+            const lastAssistant = [...mappedMessages].reverse().find(m => m.role === 'assistant');
             if (lastAssistant?.executionDetails) {
               setModel(lastAssistant.executionDetails.modelId);
               setStrategy(lastAssistant.executionDetails.strategy || 'balanced');
@@ -69,7 +75,7 @@ function PortalChatContent() {
           {
             id: 'welcome',
             role: 'assistant',
-            content: 'Hello! I am your Enterprise AI Assistant. I can help with code reviews, summarizing documents, data analysis, and general Q&A. All queries run through the secure Gateway with automatic compliance filters.',
+            content: t('emptyState'),
             timestamp: new Date().toISOString(),
           }
         ]);
@@ -105,8 +111,8 @@ function PortalChatContent() {
     }
   };
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSend = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim() && !selectedFile) return;
 
     const userMessageContent = selectedFile 
@@ -134,13 +140,10 @@ function PortalChatContent() {
       const res = await api.chatCompletion(chatPayload, model, strategy, conversationId || undefined);
 
       if (!conversationId && res.conversationId) {
-        // We created a new conversation, update URL without reloading
         window.history.replaceState(null, '', `/en/portal?c=${res.conversationId}`);
-        // Optionally notify layout to refresh conversation list
-        // (A more robust way would be a global state/context, but this works for MVP)
       }
 
-      const isOllama = res.id?.includes('ollama') || model === 'llama3.2';
+      const isOllama = res.id?.includes('ollama') || model === 'llama3.2' || model === 'qwen2.5:3b';
       const isCache = res.choices?.[0]?.finish_reason === 'stop' && res.id?.startsWith('cache-'); 
 
       const assistantMessage: ChatMessage = {
@@ -192,29 +195,31 @@ function PortalChatContent() {
 
   return (
     <div className="flex flex-col flex-1 h-full overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Top Navigation Bar */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <h1 className="text-base font-bold text-zinc-200">Secure Assistant</h1>
         </div>
 
-        {/* Configurations selector */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1">
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase">Model</span>
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase">{t('model')}</span>
             <select
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={(e) => {
+                setModel(e.target.value);
+                localStorage.setItem('defaultModel', e.target.value);
+              }}
               className="bg-transparent text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer"
             >
               <option value="llama3.2">llama3.2 (Local Ollama)</option>
+              <option value="qwen2.5:3b">qwen2.5:3b (Local Ollama)</option>
               <option value="gpt-4o">gpt-4o (OpenAI Cloud)</option>
               <option value="anthropic.claude-3-sonnet">claude-3 (AWS Bedrock)</option>
             </select>
           </div>
 
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1">
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase">Strategy</span>
+            <span className="text-[10px] text-zinc-500 font-semibold uppercase">{t('strategy')}</span>
             <select
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
@@ -228,7 +233,6 @@ function PortalChatContent() {
         </div>
       </header>
 
-      {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((msg) => (
@@ -236,7 +240,6 @@ function PortalChatContent() {
               key={msg.id}
               className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
             >
-              {/* Message content bubble */}
               <div
                 className={`max-w-[85%] rounded-xl p-4 text-sm leading-relaxed border ${
                   msg.role === 'user'
@@ -246,7 +249,6 @@ function PortalChatContent() {
               >
                 <div className="whitespace-pre-wrap">{msg.content}</div>
 
-                {/* Actions row under assistant bubbles */}
                 {msg.role === 'assistant' && msg.id !== 'welcome' && (
                   <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-zinc-800/80 text-[10px] text-zinc-500">
                     <button
@@ -269,7 +271,6 @@ function PortalChatContent() {
                 )}
               </div>
 
-              {/* Collapsible Execution Details (Admin panel style) */}
               {msg.role === 'assistant' && msg.executionDetails && (
                 <details className="w-full max-w-[85%] bg-zinc-900 border border-zinc-800 rounded-lg group text-xs text-zinc-400 select-none overflow-hidden">
                   <summary className="px-4 py-2 hover:bg-zinc-850 cursor-pointer flex items-center justify-between font-semibold select-none">
@@ -319,7 +320,6 @@ function PortalChatContent() {
             </div>
           ))}
 
-          {/* Loading Indicator */}
           {loading && (
             <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900 border border-zinc-850 p-3.5 rounded-lg w-max animate-pulse">
               <RefreshCw className="w-3.5 h-3.5 text-blue-500 animate-spin" />
@@ -331,10 +331,8 @@ function PortalChatContent() {
         </div>
       </div>
 
-      {/* Input area */}
       <footer className="p-4 border-t border-zinc-900 bg-zinc-950/40">
         <form onSubmit={handleSend} className="max-w-3xl mx-auto flex flex-col gap-2">
-          {/* File attachment preview */}
           {selectedFile && (
             <div className="flex items-center gap-2 p-2 bg-zinc-900 border border-zinc-800 rounded-lg w-max text-xs text-zinc-300">
               <FileText className="w-4 h-4 text-blue-500" />
@@ -363,11 +361,18 @@ function PortalChatContent() {
             >
               <Upload className="w-5 h-5" />
             </button>
-            <input
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything or attach business documents..."
-              className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none px-2"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={t('placeholder')}
+              className="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-zinc-100 placeholder-zinc-500 resize-none max-h-32 min-h-[44px] py-3 px-2"
+              rows={1}
               disabled={loading}
             />
             <button

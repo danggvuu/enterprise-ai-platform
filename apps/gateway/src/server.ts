@@ -6,11 +6,15 @@ import { EnterpriseLogger } from '@enterprise/logger';
 import { EnterpriseAuth } from '@enterprise/auth';
 import Redis from 'ioredis';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 
 import authRoutes from './controllers/auth';
 import portalRoutes from './controllers/portal';
 import adminRoutes from './controllers/admin';
 import chatRoutes from './controllers/chat';
+import fileRoutes from './controllers/files';
+import providerManagementRoutes from './controllers/provider-management';
+import { prisma } from '@ai-gateway/database';
 
 const logger = new EnterpriseLogger();
 
@@ -60,7 +64,8 @@ export const buildServer = async (): Promise<FastifyInstance> => {
   });
 
   server.setErrorHandler((error: any, request, reply) => {
-    logger.error({ message: `Unhandled error in Gateway: ${error.message}` });
+    const errMessage = error?.message ? error.message : (typeof error === 'string' ? error : 'Unknown error');
+    logger.error({ message: `Unhandled error in Gateway: ${errMessage}` });
     
     // Default fallback
     let statusCode = 500;
@@ -76,7 +81,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     }
 
     // Prisma / Database offline
-    if (error.message.includes('Prisma') || error.message.includes('fetch failed')) {
+    if (error?.message && typeof error.message === 'string' && (error.message.includes('Prisma') || error.message.includes('fetch failed'))) {
       statusCode = 503;
       code = 'DATABASE_UNAVAILABLE';
       message = 'The platform database is temporarily unavailable.';
@@ -114,6 +119,12 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     credentials: true,
   });
 
+  await server.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+  });
+
   await server.register(swagger, {
     openapi: {
       info: {
@@ -121,7 +132,7 @@ export const buildServer = async (): Promise<FastifyInstance> => {
         description: 'Global Cloud API Gateway for AI models',
         version: '1.0.0',
       },
-      servers: [{ url: 'http://localhost:3000' }],
+      servers: [{ url: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000' }],
     },
   });
 
@@ -146,17 +157,49 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     });
   }
 
-  // Health suite
+  // Health suite with deep dependencies check
   server.get('/health', async () => {
     logger.info({ message: 'Health check ping received' });
-    let redisStatus = 'ok';
+    
+    let redisStatus = 'disconnected';
+    let dbStatus = 'disconnected';
+    let ollamaStatus = 'disconnected';
+    let ollamaVersion = null;
+
     if (process.env.NODE_ENV !== 'test') {
-      try { await redis.ping(); } catch (e) { redisStatus = 'error'; }
+      try { 
+        await redis.ping(); 
+        redisStatus = 'connected';
+      } catch (e) { redisStatus = 'disconnected'; }
+
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+        dbStatus = 'connected';
+      } catch (e) { dbStatus = 'disconnected'; }
+
+      try {
+        const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1000);
+        const res = await fetch(`${ollamaUrl}/api/version`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (res.ok) {
+          const data = await res.json();
+          ollamaVersion = data.version;
+          ollamaStatus = 'connected';
+        }
+      } catch (e) {
+        ollamaStatus = 'disconnected';
+      }
     }
+
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
       redis: redisStatus,
+      database: dbStatus,
+      ollama: ollamaStatus,
+      ollamaVersion,
       version: '1.0.0',
       memory: process.memoryUsage(),
     };
@@ -188,6 +231,8 @@ export const buildServer = async (): Promise<FastifyInstance> => {
     api.register(portalRoutes);
     api.register(adminRoutes);
     api.register(chatRoutes);
+    api.register(fileRoutes);
+    api.register(providerManagementRoutes);
   });
 
   server.addHook('onClose', async () => {
@@ -203,8 +248,8 @@ if (require.main === module) {
     try {
       await server.ready();
       server.swagger(); 
-      await server.listen({ port: 3000, host: '0.0.0.0' });
-      logger.info({ message: 'Enterprise AI Gateway started on port 3000' });
+      await server.listen({ port: 8080, host: '0.0.0.0' });
+      logger.info({ message: 'Enterprise AI Gateway started on port 8080' });
     } catch (err) {
       logger.error({ message: 'Error starting server', error: err as Error });
       process.exit(1);

@@ -8,6 +8,10 @@ const withNextIntl = createNextIntlPlugin(
 const nextConfig: NextConfig = {
   transpilePackages: ["@enterprise/models"],
   eslint: { ignoreDuringBuilds: true },
+  devIndicators: {
+    appIsrStatus: false,
+    buildActivity: false,
+  }
 };
 
 export default withNextIntl(nextConfig);

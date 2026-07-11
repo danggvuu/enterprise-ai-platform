@@ -3,24 +3,31 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Activity, Database, GitMerge, FileCheck, Shield, BarChart3, Settings, BookOpen, Key, Users, History, AlertOctagon, Terminal } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { LayoutDashboard, Activity, Database, GitMerge, FileCheck, Shield, BarChart3, Settings, BookOpen, Key, Users, History, AlertOctagon, Terminal, Building, Beaker } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations('Sidebar');
   const [collapsed, setCollapsed] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Live Requests', href: '/admin/monitor', icon: Activity },
-    { name: 'Providers', href: '/admin/providers', icon: Database },
-    { name: 'Routing Engine', href: '/admin/routing', icon: GitMerge },
-    { name: 'Policies', href: '/admin/policies', icon: FileCheck },
-    { name: 'Cache', href: '/admin/cache', icon: History },
-    { name: 'Costs', href: '/admin/costs', icon: BarChart3 },
-    { name: 'Security', href: '/admin/security', icon: Shield },
-    { name: 'Logs Explorer', href: '/admin/logs', icon: Terminal },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
-    { name: 'Documentation', href: '/admin/docs', icon: BookOpen },
+    { name: t('dashboard'), href: `/${locale}/admin/dashboard`, icon: LayoutDashboard },
+    { name: t('users'), href: `/${locale}/admin/users`, icon: Users },
+    { name: t('orgs'), href: `/${locale}/admin/orgs`, icon: Building },
+    { name: t('monitor'), href: `/${locale}/admin/monitor`, icon: Activity },
+    { name: t('providers'), href: `/${locale}/admin/providers`, icon: Database },
+    { name: t('routing'), href: `/${locale}/admin/routing`, icon: GitMerge },
+    { name: t('policies'), href: `/${locale}/admin/policies`, icon: FileCheck },
+    { name: t('cache'), href: `/${locale}/admin/cache`, icon: History },
+    { name: t('costs'), href: `/${locale}/admin/costs`, icon: BarChart3 },
+    { name: t('security'), href: `/${locale}/admin/security`, icon: Shield },
+    { name: t('logs'), href: `/${locale}/admin/logs`, icon: Terminal },
+    { name: 'AI Playground', href: `/${locale}/admin/playground`, icon: Beaker },
+    { name: 'API Keys', href: `/${locale}/admin/api-keys`, icon: Key },
+    { name: t('settings'), href: `/${locale}/admin/settings`, icon: Settings },
+    { name: t('docs'), href: `/${locale}/admin/docs`, icon: BookOpen },
   ];
 
   return (
@@ -55,10 +62,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-zinc-900 flex items-center justify-between text-[10px] text-zinc-500 bg-zinc-900/10">
           <span>Control Plane v1.0.0</span>
-          <Link href="/" className="hover:text-zinc-300 font-semibold">&larr; Portal</Link>
+          <Link href={`/${locale}/portal`} className="hover:text-zinc-300 font-semibold">&larr; {t('portal')}</Link>
         </div>
       </aside>
 

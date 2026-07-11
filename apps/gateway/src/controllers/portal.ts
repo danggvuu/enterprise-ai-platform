@@ -106,4 +106,23 @@ export default async function portalRoutes(fastify: FastifyInstance) {
     });
     return { success: true };
   });
+
+  fastify.delete('/v1/portal/conversations', async (request, reply) => {
+    const userId = (request as any).user.id;
+    const { ids } = request.body as any || { ids: null };
+    
+    if (ids && Array.isArray(ids)) {
+      await prisma.conversation.updateMany({
+        where: { id: { in: ids }, userId },
+        data: { deletedAt: new Date() }
+      });
+    } else {
+      await prisma.conversation.updateMany({
+        where: { userId },
+        data: { deletedAt: new Date() }
+      });
+    }
+    
+    return { success: true };
+  });
 }

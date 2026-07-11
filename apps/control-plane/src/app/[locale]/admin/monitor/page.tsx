@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { RequestLog } from '@/lib/types';
 import { AlertCircle, Clock, Shield, Coins, Search, Terminal, ArrowDownCircle, RefreshCw } from 'lucide-react';
 
 export default function MonitorPage() {
+  const t = useTranslations('Admin');
   const [liveLogs, setLiveLogs] = useState<RequestLog[]>([]);
   const [filter, setFilter] = useState('');
   const [selectedReq, setSelectedReq] = useState<RequestLog | null>(null);
@@ -25,13 +27,32 @@ export default function MonitorPage() {
 
   // Connect SSE for real-time log stream
   useEffect(() => {
-    const sseUrl = `${api.getBaseUrl()}/v1/admin/sse`;
+    const sseUrl = `${api.getBaseUrl()}/v1/admin/events`;
     const eventSource = new EventSource(sseUrl);
 
     eventSource.addEventListener('request', (e: MessageEvent) => {
       try {
-        const newLog = JSON.parse(e.data) as RequestLog;
-        setLiveLogs(prev => [newLog, ...prev.slice(0, 199)]); // Keep last 200 logs
+        const raw = JSON.parse(e.data);
+        const mappedLog: RequestLog = {
+          id: raw.id,
+          timestamp: raw.createdAt || raw.timestamp,
+          user: raw.userId || raw.user || 'system',
+          department: 'Engineering',
+          prompt: raw.prompt,
+          providerId: raw.providerId,
+          modelId: raw.modelId,
+          strategy: raw.routingStrategy || raw.strategy,
+          latencyMs: raw.latencyMs,
+          costUsd: raw.costUsd,
+          tokens: raw.tokens || 0,
+          cacheHit: raw.isCacheHit || raw.cacheHit || false,
+          piiDetected: raw.piiDetected || false,
+          injectionDetected: raw.injectionDetected || false,
+          status: (raw.status || '').toLowerCase() === 'success' ? 'success' : 'error',
+          errorMessage: raw.errorMessage,
+          responseText: raw.responseText,
+        };
+        setLiveLogs(prev => [mappedLog, ...prev.slice(0, 199)]); // Keep last 200 logs
       } catch (err) {
         console.error('Failed to parse SSE event data', err);
       }
@@ -52,8 +73,8 @@ export default function MonitorPage() {
     <div className="space-y-8">
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-extrabold text-zinc-100">Live Request Monitor</h1>
-        <p className="text-zinc-500 text-xs mt-1">Real-time HTTP/SSE stream of gateway chat and API traffic.</p>
+        <h1 className="text-2xl font-extrabold text-zinc-100">{t('monitor')}</h1>
+        <p className="text-zinc-500 text-xs mt-1">{t('monitorDesc')}</p>
       </div>
 
       {/* Control panel & Filter */}

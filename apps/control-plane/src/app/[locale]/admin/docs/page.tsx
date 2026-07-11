@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { BookOpen, Terminal, Code, Settings } from 'lucide-react';
 
 export default function DocsPage() {
+  const t = useTranslations('Admin');
   return (
     <div className="space-y-8">
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-extrabold text-zinc-100">Gateway Documentation</h1>
-        <p className="text-zinc-500 text-xs mt-1">Access Swagger UI logs, system-wide schemas, and release architectures.</p>
+        <h1 className="text-2xl font-extrabold text-zinc-100">{t('docs')}</h1>
+        <p className="text-zinc-500 text-xs mt-1">{t('docsDesc')}</p>
       </div>
 
       {/* Docs Grid */}
