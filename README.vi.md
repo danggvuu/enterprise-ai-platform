@@ -3,13 +3,13 @@
     <a href="README.md">English</a> | <strong>Tiếng Việt</strong>
   </p>
   <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/network.svg" width="80" alt="Logo">
-  <h1 align="center">Enterprise AI Platform & Gateway</h1>
+  <h1 align="center">Nền tảng Kinh doanh AI & SaaS (AI Gateway)</h1>
   <p align="center">
-    Nền tảng Cổng AI (AI Gateway) và Cổng thông tin nhân viên (Employee Portal) cấp doanh nghiệp.
-    Bảo mật, định tuyến và tối ưu hoá chi phí sử dụng LLM cho toàn bộ tổ chức của bạn.
+    Một cỗ máy SaaS đa người thuê (multi-tenant) sẵn sàng cho môi trường Production, giúp bạn bán lại API AI hoặc cung cấp các Cổng ChatGPT tùy chỉnh cho doanh nghiệp (B2B SaaS).
+    Quản lý, thu phí, bảo mật và tối ưu hóa LLM cho khách hàng của bạn.
   </p>
   <p align="center">
-    <a href="#tính-năng"><strong>Tính năng</strong></a> · 
+    <a href="#tính-năng"><strong>Mô hình Kinh doanh</strong></a> · 
     <a href="#kiến-trúc"><strong>Kiến trúc</strong></a> · 
     <a href="#hướng-dẫn-cài-đặt"><strong>Cài đặt nhanh</strong></a> · 
     <a href="#triển-khai"><strong>Triển khai</strong></a>
@@ -18,13 +18,20 @@
 
 <hr />
 
-## 🚀 Tổng quan
+## 🚀 Mô hình Kinh doanh (Monetization Models)
 
-**Enterprise AI Platform** là một hệ thống gateway và giao diện chat hợp nhất được thiết kế để giải quyết 3 thách thức lớn nhất khi áp dụng AI Tạo sinh (Generative AI) vào doanh nghiệp: **Bảo mật, Chi phí, và Phụ thuộc nhà cung cấp**.
+Nền tảng này không chỉ là một công cụ quản lý nội bộ — nó được thiết kế như một **Cỗ máy kinh doanh SaaS hoàn chỉnh** giúp bạn tạo ra doanh thu từ làn sóng AI:
 
-Thay vì để nhân viên sử dụng trực tiếp các công cụ AI rời rạc, họ sẽ truy cập vào một **Cổng thông tin nhân viên** duy nhất. Ở phía sau, **AI Gateway** sẽ tự động định tuyến các câu hỏi đến mô hình tối ưu nhất (OpenAI, Anthropic, Ollama cục bộ, v.v.), che giấu dữ liệu nhạy cảm (PII) theo thời gian thực, lưu trữ bộ nhớ đệm (cache) để tiết kiệm chi phí, và cung cấp cho phòng IT một bảng điều khiển quản trị toàn diện.
+1. **Bán sỉ API AI (Mô hình OpenRouter):** Chạy các mô hình miễn phí (Ollama) trên máy chủ riêng hoặc mua sỉ API từ OpenAI/Anthropic. Bán lại API Key cho các lập trình viên hoặc công ty khác. Hệ thống sẽ đếm chính xác từng Token, trừ tiền trong tài khoản của khách (Pay-as-you-go), và tự động khóa nếu khách hết tiền.
+2. **Cho thuê Cổng AI Doanh nghiệp (White-label B2B SaaS):** Bán các hệ thống ChatGPT nội bộ mang thương hiệu riêng (White-label) cho các doanh nghiệp không rành công nghệ (Công ty Luật, Bệnh viện, Bất động sản). Quản lý hàng chục khách hàng (Organizations) trên cùng một hạ tầng duy nhất và thu phí thuê bao $500+/tháng cho mỗi khách.
+3. **Chợ Công cụ AI (AI Tool Marketplace):** Xây dựng các Prompt và Trợ lý AI được lập trình sẵn. Người dùng (End-users) nạp tiền (mua Credit) vào hệ thống để được dùng các công cụ này. Bạn thu phần lợi nhuận chênh lệch khổng lồ giữa giá Credit và giá gốc của API.
 
 ## ✨ Tính năng chính
+
+### 💰 Hệ thống Thanh toán & Kiến trúc Đa người thuê
+- **Bộ đếm Token & Tính tiền (Billing):** Mỗi một prompt/response đều được tính toán chính xác chi phí tới từng con số thập phân và gán cho đúng tài khoản người dùng/tổ chức.
+- **Quản lý Quota & Hạn mức (Pay-as-you-go):** Thiết lập ngân sách tối đa cho từng tổ chức (Organization) để đảm bảo không bị đội chi phí API.
+- **Cách ly dữ liệu an toàn:** Cho phép lưu trữ dữ liệu của hàng chục công ty khách hàng khác nhau trên cùng một máy chủ mà vẫn bảo đảm tính riêng tư tuyệt đối.
 
 ### 🛡️ Bảo mật & Tuân thủ doanh nghiệp
 - **Bộ máy che giấu PII:** Tự động phát hiện và che giấu Số điện thoại, Email, và Thẻ tín dụng trước khi dữ liệu rời khỏi mạng nội bộ của bạn.

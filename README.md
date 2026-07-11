@@ -3,10 +3,10 @@
     <strong>English</strong> | <a href="README.vi.md">Tiếng Việt</a>
   </p>
   <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/network.svg" width="80" alt="Logo">
-  <h1 align="center">Enterprise AI Platform & Gateway</h1>
+  <h1 align="center">AI-as-a-Service SaaS Platform (AI Gateway)</h1>
   <p align="center">
-    A production-ready, commercial-grade AI Gateway and Employee Portal.
-    Secure, route, and optimize LLM usage across your entire organization.
+    A production-ready, multi-tenant SaaS platform for reselling AI API access and building custom B2B AI Portals.
+    Monetize, secure, route, and optimize LLM usage for your clients.
   </p>
   <p align="center">
     <a href="#features"><strong>Features</strong></a> · 
@@ -18,13 +18,20 @@
 
 <hr />
 
-## 🚀 Overview
+## 🚀 Business Value (Monetization Models)
 
-The **Enterprise AI Platform** is a unified gateway and chat interface designed to solve the three biggest challenges of adopting Generative AI in large organizations: **Security, Cost, and Vendor Lock-in**.
+This platform isn't just an internal tool—it is designed to be a **turn-key SaaS business engine** that allows you to generate revenue through AI:
 
-Instead of allowing employees to use fragmented AI tools directly, they access a unified **Employee Portal**. Behind the scenes, the **AI Gateway** automatically routes requests to the optimal model (OpenAI, Anthropic, local Ollama, etc.), redacts sensitive PII data on the fly, caches redundant queries to save costs, and provides IT with a comprehensive admin dashboard.
+1. **AI API Reseller (The OpenRouter Model):** Buy bulk API access (OpenAI/Anthropic) or host free local models (Ollama). Resell API keys to other developers or companies. The platform meters token usage precisely, bills clients (pay-as-you-go), and auto-blocks them when out of credits.
+2. **White-label AI Portals (B2B SaaS):** Sell branded, highly secure internal ChatGPT portals to non-tech businesses (Law Firms, Agencies, Clinics). Manage multiple tenants (Organizations), set budgets, and charge them a monthly subscription of $500+/month while your underlying API cost remains minimal.
+3. **AI Tool Marketplace (B2C):** Build pre-configured AI Agents and Prompts. End-users purchase credits to use your optimized tools. You keep the massive profit margin between the credit price and the raw API cost.
 
 ## ✨ Key Features
+
+### 💰 Billing & Multi-tenant Architecture
+- **Token Metering & Billing:** Every single prompt and response token is tracked, priced, and assigned to a specific user and organization.
+- **Pay-as-you-go Quotas:** Set rate limits and budget caps per tenant or department to guarantee profitability.
+- **Multi-Organization Isolation:** Safely host multiple client companies on the same infrastructure with complete data separation.
 
 ### 🛡️ Enterprise Security & Compliance
 - **PII Redaction Engine:** Automatically detects and masks Phone Numbers, Emails, and Credit Cards before data leaves your network.
