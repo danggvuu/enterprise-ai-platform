@@ -116,11 +116,10 @@ docker-compose up -d
 
 | Cổng nhân viên | Bảng điều khiển quản trị |
 | :---: | :---: |
-| <img src="docs/images/portal.png" width="400" /> | <img src="docs/images/dashboard.png" width="400" /> |
-
+| <img width="1394" height="787" alt="Employee Portal" src="https://github.com/user-attachments/assets/9c2b1c91-f235-48af-9e9c-5012b20efd1f" />| <img width="1394" height="787" alt="Admin Dashboard" src="https://github.com/user-attachments/assets/dc93e64d-8f90-4f55-8341-d7f3507a9cfe" /> |
 | Cấu hình định tuyến | Phân tích chi phí |
 | :---: | :---: |
-| <img src="docs/images/routing.png" width="400" /> | <img src="docs/images/costs.png" width="400" /> |
+| <img width="1394" height="787" alt="Routing Configuration" src="https://github.com/user-attachments/assets/c764b4fb-0ad5-4e52-88dc-7c52e2ee411b" />| <img width="1394" height="787" alt="Cost Analytics" src="https://github.com/user-attachments/assets/117f53e3-ad0d-4fbf-b797-597b27caf0f8" />|
 
 ---
 
