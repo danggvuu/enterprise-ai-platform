@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { LayoutDashboard, Activity, Database, GitMerge, FileCheck, Shield, BarChart3, Settings, BookOpen, Key, Users, History, AlertOctagon, Terminal, Building, Beaker, User, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ProfileModal } from '@/components/profile/ProfileModal';
+import { PageTransition } from '@/components/ui/page-transition';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -123,7 +124,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col overflow-hidden bg-zinc-950 relative z-10">
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="max-w-6xl mx-auto space-y-8">
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
           </div>
         </main>
       </div>
