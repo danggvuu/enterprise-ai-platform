@@ -182,7 +182,7 @@ function PortalChatContent() {
         { role: 'user', content: userMessageContent }
       ];
 
-      const response = await api.chatCompletionStream(chatPayload, model, strategy, conversationId || undefined);
+      const response = await api.chatCompletionStream(chatPayload, model, selectedProviderId, strategy, conversationId || undefined);
 
       if (!response.ok) {
         throw new Error('Stream request failed');

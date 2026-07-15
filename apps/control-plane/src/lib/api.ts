@@ -143,7 +143,7 @@ export const api = {
     });
   },
 
-  chatCompletionStream(messages: any[], model: string, strategy: string, conversationId?: string): Promise<Response> {
+  chatCompletionStream(messages: any[], model: string, providerId: string | null, strategy: string, conversationId?: string): Promise<Response> {
     const token = getAuthToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -158,6 +158,7 @@ export const api = {
       headers,
       body: JSON.stringify({
         model,
+        providerId,
         messages,
         conversationId
       }),

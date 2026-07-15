@@ -31,7 +31,7 @@ export default async function chatRoutes(fastify: FastifyInstance) {
   fastify.addHook('preValidation', (fastify as any).authenticate);
 
   fastify.post('/v1/chat/completions', async (request, reply) => {
-    const payload = request.body as ChatRequest & { conversationId?: string };
+    const payload = request.body as ChatRequest & { conversationId?: string; providerId?: string };
     if (!payload || !payload.model || !payload.messages) {
       return reply.status(400).send({ error: 'Invalid request payload' });
     }
@@ -196,6 +196,7 @@ export default async function chatRoutes(fastify: FastifyInstance) {
     for (let attempt = 0; attempt < maxFailovers; attempt++) {
       const decision = dynamicRouter.route({
         model: payload.model,
+        providerId: payload.providerId,
         strategy,
       }, { containsPII: piiDetected });
       
@@ -412,6 +413,7 @@ export default async function chatRoutes(fastify: FastifyInstance) {
 
     const decision = dynamicRouter.route({
       model: payload.model,
+      providerId: payload.providerId,
       strategy,
     }, { containsPII: piiDetected });
     

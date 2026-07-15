@@ -54,6 +54,7 @@ export interface RoutingStrategy {
 
 export interface RouteRequest {
   model?: string; // If specific model requested
+  providerId?: string; // If specific provider requested
   requiredFeatures?: ('streaming' | 'vision' | 'tool-calling' | 'embeddings')[];
   requiredCompliance?: string[];
   minimumContextWindow?: number;

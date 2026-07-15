@@ -81,8 +81,13 @@ export class DynamicRouter {
       candidates = this.capabilityRegistry.getAllProviders();
     }
 
+    // Filter by specific provider if requested
+    if (policyRequest.providerId) {
+      candidates = candidates.filter(p => p.id === policyRequest.providerId);
+    }
+
     if (candidates.length === 0) {
-      throw new ProviderError(`No providers support the requested requirements (model: ${policyRequest.model})`);
+      throw new ProviderError(`No providers support the requested requirements (model: ${policyRequest.model}, provider: ${policyRequest.providerId})`);
     }
 
     const decisions: RouteDecision[] = [];
